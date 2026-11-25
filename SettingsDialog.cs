@@ -29,7 +29,8 @@ public class SettingsDialog : Dialog
     readonly Button _install = Ui.Button("Install engine", null, "accent");
     readonly Button _update = Ui.Button("Update engine");
     readonly CheckBox _autoUpdate = new() { Content = "Check for new versions of ClipHarbor automatically" };
-    readonly CheckBox _autoEngine = new() { Content = "Keep the download engine up to date automatically" };
+    readonly CheckBox _autoInstall = new() { Content = "Install them automatically" };
+    readonly CheckBox _autoEngine =new() { Content = "Keep the download engine up to date automatically" };
     readonly Button _checkApp = Ui.Button("Check now");
     readonly TextBlock _appStatus = new() { Classes = { "sub" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 };
 
@@ -120,6 +121,12 @@ public class SettingsDialog : Dialog
         root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 0, 0, 10), Children = { _checkApp, _appStatus } });
         _autoUpdate.IsChecked = s.CheckAppUpdates;
         root.Children.Add(_autoUpdate);
+        _autoInstall.IsChecked = s.InstallAppUpdates;
+        _autoInstall.IsEnabled = s.CheckAppUpdates;
+        _autoInstall.Margin = new Thickness(28, 4, 0, 0);
+        _autoUpdate.IsCheckedChanged += (_, _) => _autoInstall.IsEnabled = _autoUpdate.IsChecked == true;
+        ToolTip.SetTip(_autoInstall, "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.");
+        root.Children.Add(_autoInstall);
         _checkApp.Click += async (_, _) =>
         {
             _checkApp.IsEnabled = false;
@@ -230,6 +237,7 @@ public class SettingsDialog : Dialog
         _s.BackgroundAsked = true;
         _s.CheckAppUpdates = _autoUpdate.IsChecked == true;
         _s.UpdateEngineAutomatically = _autoEngine.IsChecked == true;
+        _s.InstallAppUpdates = _autoInstall.IsChecked == true;
         _s.EnginePath = (_enginePath.Text ?? "").Trim();
         _s.FfmpegPath = (_ffPath.Text ?? "").Trim();
     }

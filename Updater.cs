@@ -182,25 +182,32 @@ public static class Updater
     }
 
     /// <summary>Starts the new version; it waits for this copy to close before taking over.</summary>
-    public static void Launch(string program)
+    public static void Launch(string program, bool hidden = false)
     {
-        var pid = Environment.ProcessId.ToString();
+        var args = new List<string> { AfterUpdateFlag, Environment.ProcessId.ToString() };
+        if (hidden) args.Add(StartAtLogin.Flag); // stay in the tray, like the copy it replaces
         if (Platform.IsMac && InstallTarget(program) is var bundle && bundle.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
         {
             var psi = new ProcessStartInfo("open") { UseShellExecute = false };
-            foreach (var a in new[] { "-n", bundle, "--args", AfterUpdateFlag, pid }) psi.ArgumentList.Add(a);
+            foreach (var a in new[] { "-n", bundle, "--args" }.Concat(args)) psi.ArgumentList.Add(a);
             Process.Start(psi)?.Dispose();
             return;
         }
         var start = new ProcessStartInfo(program) { UseShellExecute = false };
-        start.ArgumentList.Add(AfterUpdateFlag);
-        start.ArgumentList.Add(pid);
+        foreach (var a in args) start.ArgumentList.Add(a);
         Process.Start(start)?.Dispose();
     }
+
+    /// <summary>This copy was just started by an update.</summary>
+    public static bool JustUpdated { get; private set; }
+
+    /// <summary>The release page of the running version, for "What's new".</summary>
+    public static string CurrentReleasePage => $"https://github.com/{Repo}/releases/tag/v{CurrentText}";
 
     /// <summary>Called early by the new version: wait for the old one to exit, then tidy up its leftovers.</summary>
     public static void FinishUpdate(int oldPid)
     {
+        JustUpdated = true;
         try { using var old = Process.GetProcessById(oldPid); old.WaitForExit(20000); } catch { }
         if (Environment.ProcessPath is { } p) DeleteOld(InstallTarget(p));
     }

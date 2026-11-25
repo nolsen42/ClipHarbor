@@ -104,9 +104,12 @@ public class MainWindow : Window
         {
             if (DateTime.Now - _lastUpdateCheck > TimeSpan.FromHours(24)) _ = CheckForUpdateAsync(manual: false);
             if (DateTime.Now - _lastEngineUpdate > TimeSpan.FromHours(24)) _ = UpdateEngineQuietlyAsync();
+            if (_readyProgram != null && !IsVisible && Idle) RestartIntoUpdate(hidden: true);
         };
         if (_state.Settings.SubscriptionCheckHours > 0) _ = _subs.AutoCheck();
         if (_startLinks.Count > 0) _ = HandleIncoming(_startLinks);
+        if (Updater.JustUpdated)
+            ShowBanner($"ClipHarbor was updated to {Updater.CurrentText}.", "What's new", () => Platform.Open(Updater.CurrentReleasePage));
         _ = CheckForUpdateAsync(manual: false);
         _ = UpdateEngineQuietlyAsync();
     }
@@ -136,18 +139,58 @@ public class MainWindow : Window
     /// <summary>Looks for a newer release on GitHub. Automatic checks stay quiet unless one is found.</summary>
     public async Task CheckForUpdateAsync(bool manual)
     {
+        if (_readyProgram != null) { if (manual) ShowRestartBanner(); return; }
         if (_updating || (!manual && !_state.Settings.CheckAppUpdates)) return;
         _lastUpdateCheck = DateTime.Now;
         try
         {
             _update = await Updater.CheckAsync(CancellationToken.None);
-            if (_update != null) { if (manual || !_banner.IsVisible) ShowUpdateBanner(); }
+            if (_update != null && !manual && _state.Settings.InstallAppUpdates) await InstallQuietlyAsync(_update);
+            else if (_update != null) { if (manual || !_banner.IsVisible) ShowUpdateBanner(); }
             else if (manual) await Dialog.Info(this, "Updates", $"You have the latest version of ClipHarbor ({Updater.CurrentText}).");
         }
         catch (Exception ex)
         {
             if (manual) await Dialog.Info(this, "Updates", "Couldn't check for updates: " + ex.Message);
         }
+    }
+
+    /// <summary>The new version, already in place on disk, waiting for a restart.</summary>
+    string? _readyProgram;
+
+    bool Idle => _running.Count == 0 && !_state.Items.Any(i => i.Status == ItemStatus.Queued);
+
+    /// <summary>Downloads and puts a new version in place without asking. The running copy keeps going
+    /// (it was moved aside), and the new one takes over at the next restart: right away when ClipHarbor
+    /// is hidden in the tray with nothing to do, otherwise when the person chooses or next starts it.</summary>
+    async Task InstallQuietlyAsync(UpdateInfo u)
+    {
+        var exe = Environment.ProcessPath ?? "";
+        if (exe.Length == 0 || !Updater.CanInstall(u, exe)) { if (!_banner.IsVisible) ShowUpdateBanner(); return; }
+        _updating = true; // also stops further checks: the update is on disk from here on
+        try { _readyProgram = await Updater.InstallAsync(u, exe, new Progress<(string, double)>(_ => { }), CancellationToken.None); }
+        catch { _updating = false; if (!_banner.IsVisible) ShowUpdateBanner(); return; }
+        _readyVersion = u.Version.ToString(3);
+        if (!IsVisible && Idle) RestartIntoUpdate(hidden: true);
+        else ShowRestartBanner();
+    }
+
+    string _readyVersion = "";
+
+    void ShowRestartBanner() =>
+        ShowBanner($"ClipHarbor {_readyVersion} is installed and starts next time.", "Restart now", () => RestartIntoUpdate(hidden: false));
+
+    void RestartIntoUpdate(bool hidden)
+    {
+        if (_readyProgram is not { } program) return;
+        _readyProgram = null;
+        _quitting = true;
+        foreach (var c in _running.Values) c.Cancel();
+        foreach (var it in _state.Items.Where(i => i.Status == ItemStatus.Downloading)) it.Status = ItemStatus.Queued;
+        _state.Save();
+        Updater.Launch(program, hidden);
+        Close();
+        _shutdown();
     }
 
     void ShowUpdateBanner()
@@ -158,6 +201,7 @@ public class MainWindow : Window
 
     async Task UpdateNowAsync()
     {
+        if (_readyProgram != null) { RestartIntoUpdate(hidden: false); return; }
         if (_update is not { } u || _updating) return;
         var exe = Environment.ProcessPath ?? "";
         var notes = u.Notes.Trim();
@@ -562,7 +606,8 @@ public class MainWindow : Window
                 await Dialog.Info(this, "Settings", "ClipHarbor couldn't set itself to start when you sign in. Your other settings were saved.");
         }
         if (Engine.HasEngine && _banner.IsVisible && (_bannerText.Text ?? "").StartsWith("One-time")) _banner.IsVisible = false;
-        if (d.FoundUpdate != null) { _update = d.FoundUpdate; ShowUpdateBanner(); }
+        if (_readyProgram != null && d.FoundUpdate != null) ShowRestartBanner();
+        else if (d.FoundUpdate != null) { _update = d.FoundUpdate; ShowUpdateBanner(); }
     }
 
     // ---------------- row actions ----------------
