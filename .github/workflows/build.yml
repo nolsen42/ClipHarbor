@@ -25,6 +25,7 @@ jobs:
       tag: ${{ steps.v.outputs.tag }}
       release: ${{ steps.v.outputs.release }}
       new_release: ${{ steps.v.outputs.new_release }}
+      skip: ${{ steps.v.outputs.skip }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -34,11 +35,15 @@ jobs:
         env:
           TAG: ${{ github.event.release.tag_name }}
           BUMP: ${{ github.event.inputs.release }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          release=false; new=false
+          release=false; new=false; skip=false
           if [ -n "$TAG" ]; then
             # A release published by hand on GitHub: its tag is the version (v1.2.0 -> 1.2.0).
             v="${TAG#[vV]}"; release=true
+            # A release made by the Run workflow button already has its files; building again isn't needed.
+            n=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets | length' 2>/dev/null || echo 0)
+            if [ "${n:-0}" -gt 0 ]; then echo "$TAG already has its files; nothing to do."; release=false; skip=true; fi
           elif [ -n "$BUMP" ] && [ "$BUMP" != "no" ]; then
             last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
             last="${last#v}"; last="${last%%-*}"; [ -z "$last" ] && last=0.0.0
@@ -55,10 +60,11 @@ jobs:
             v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' ClipHarbor.csproj)
           fi
           echo "Version: $v"
-          { echo "version=$v"; echo "tag=$TAG"; echo "release=$release"; echo "new_release=$new"; } >> "$GITHUB_OUTPUT"
+          { echo "version=$v"; echo "tag=$TAG"; echo "release=$release"; echo "new_release=$new"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
 
   build:
     needs: plan
+    if: needs.plan.outputs.skip != 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -184,6 +190,7 @@ jobs:
   # The copy for the Chrome Web Store is switched off on YouTube (skip-sites.json), which that store doesn't allow.
   browser-extension:
     needs: plan
+    if: needs.plan.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -267,14 +274,20 @@ jobs:
           path: files
           merge-multiple: true
 
+      # The Run workflow button needs the secret RELEASE_TOKEN: GitHub won't let the built-in token create a
+      # tag on commits that changed this workflow file. See "Publishing a release" in the README.
       - name: Publish the release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          HAS_RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN != '' }}
           TAG: ${{ needs.plan.outputs.tag }}
           NEW: ${{ needs.plan.outputs.new_release }}
         run: |
           mv files/ClipHarbor.exe files/ClipHarbor-windows-x64.exe
           ls -la files
+          if [ "$NEW" = "true" ] && [ "$HAS_RELEASE_TOKEN" != "true" ]; then
+            echo "::warning::No RELEASE_TOKEN secret is set, so GitHub may refuse to create the tag (HTTP 403). See 'Publishing a release' in the README."
+          fi
           if [ "$NEW" = "true" ]; then
             # What's new = the commit titles since the last release (the app's updater shows these).
             last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)

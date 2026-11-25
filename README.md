@@ -100,6 +100,15 @@ GitHub Actions (see `.github/workflows/build.yml`) builds all five versions, wra
 
 Open the **Actions** tab, pick **Build**, press **Run workflow**, choose **patch** (fixes), **minor** (new features) or **major**, and press the green **Run workflow** button. The build works out the next version from the last release (for example v1.1.0 → v1.1.1), builds everything, writes the release notes from the commit titles since the last release, and publishes the release with all the files attached. Publishing a release by hand on the Releases page still works too.
 
+The button needs a repository secret named `RELEASE_TOKEN` (set up once). GitHub doesn't let a workflow's built-in token create a release tag when the commits being released changed the workflow file, so the release step uses this token instead:
+
+1. On GitHub, open your profile picture → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+2. Give it a name and an expiry. Under **Repository access** choose **Only select repositories** and pick this repository.
+3. Under **Permissions → Repository permissions**, set **Contents** and **Workflows** to **Read and write**.
+4. Generate it, copy it, and add it in this repository under **Settings → Secrets and variables → Actions → New repository secret** with the name `RELEASE_TOKEN`.
+
+When the token expires, make a new one the same way and replace the secret.
+
 ### Screenshot option
 
 `ClipHarbor --screenshot out.png` starts the app without taking focus, saves a picture of the window and exits. Automated checks use this option.
