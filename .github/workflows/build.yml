@@ -211,7 +211,10 @@ jobs:
           make dist/ClipHarbor-extension-chrome.zip   "$chrome" '[]'
           # Firefox copies installed from the signed .xpi look for newer versions in the latest release's updates.json.
           export UPDATE_URL="https://github.com/$GITHUB_REPOSITORY/releases/latest/download/updates.json"
-          make dist/ClipHarbor-extension-firefox.zip  'del(.background.service_worker) | .browser_specific_settings.gecko.update_url = env.UPDATE_URL' '[]'
+          # Mozilla signs each version number only once, so the Firefox copy adds the run number (1.2.0.41).
+          # A release that is run again (after a failed release step) then still gets a signed add-on.
+          export FF_VERSION="$v.$GITHUB_RUN_NUMBER"
+          make dist/ClipHarbor-extension-firefox.zip  'del(.background.service_worker) | .browser_specific_settings.gecko.update_url = env.UPDATE_URL | .version = env.FF_VERSION' '[]'
           make store-upload/chrome-web-store.zip      "$chrome" '["youtube.com","youtu.be","youtube-nocookie.com"]'
           ls -la dist store-upload
 
