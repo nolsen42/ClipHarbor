@@ -888,6 +888,25 @@ public static class Engine
         return code == 0 ? (text.Length > 0 ? text : "Engine is up to date.") : CleanError(e);
     }
 
+    /// <summary>True when yt-dlp is the copy ClipHarbor installed (not one from Homebrew, pip or a package manager).</summary>
+    public static bool IsOwnEngine =>
+        YtDlp is { } y && Path.GetFullPath(Path.GetDirectoryName(y) ?? "").TrimEnd(Path.DirectorySeparatorChar)
+            .Equals(Path.GetFullPath(ToolsDir).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Quietly updates ClipHarbor's own yt-dlp. Returns the new version, or null when nothing changed.</summary>
+    public static async Task<string?> UpdateEngineQuietlyAsync(CancellationToken ct)
+    {
+        if (!IsOwnEngine) return null;
+        try
+        {
+            var (code, o, e) = await RunAsync(new[] { "-U" }, ct);
+            if (code != 0) return null;
+            var m = System.Text.RegularExpressions.Regex.Match(o + "\n" + e, @"Updated yt-dlp to (\S+)");
+            return m.Success ? m.Groups[1].Value : null;
+        }
+        catch { return null; }
+    }
+
     public static async Task<string> EngineVersionAsync()
     {
         if (!HasEngine) return "";

@@ -117,6 +117,8 @@ public class AppSettings
     public bool BackgroundAsked { get; set; }
     /// <summary>Look for a newer ClipHarbor on GitHub at start and once a day.</summary>
     public bool CheckAppUpdates { get; set; } = true;
+    /// <summary>Update ClipHarbor's own copy of yt-dlp at start and once a day; sites change often.</summary>
+    public bool UpdateEngineAutomatically { get; set; } = true;
 }
 
 public class AppState

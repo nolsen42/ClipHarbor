@@ -29,6 +29,7 @@ public class SettingsDialog : Dialog
     readonly Button _install = Ui.Button("Install engine", null, "accent");
     readonly Button _update = Ui.Button("Update engine");
     readonly CheckBox _autoUpdate = new() { Content = "Check for new versions of ClipHarbor automatically" };
+    readonly CheckBox _autoEngine = new() { Content = "Keep the download engine up to date automatically" };
     readonly Button _checkApp = Ui.Button("Check now");
     readonly TextBlock _appStatus = new() { Classes = { "sub" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 };
 
@@ -104,7 +105,11 @@ public class SettingsDialog : Dialog
         root.Children.Add(_engineStatus);
         _engineBar.Margin = new Thickness(0, 10, 0, 0);
         root.Children.Add(_engineBar);
-        root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 16), Children = { _install, _update } });
+        root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _install, _update } });
+        _autoEngine.IsChecked = s.UpdateEngineAutomatically;
+        _autoEngine.Margin = new Thickness(0, 0, 0, 16);
+        ToolTip.SetTip(_autoEngine, "Video sites change often, and an old engine stops working on them.\nChecks when ClipHarbor starts and once a day, while nothing is downloading.");
+        root.Children.Add(_autoEngine);
         _enginePath.Text = s.EnginePath; Row($"Engine file ({Platform.Exe("yt-dlp")})", _enginePath);
         _ffPath.Text = s.FfmpegPath; Row($"Converter file ({Platform.Exe("ffmpeg")})", _ffPath);
         _install.Click += async (_, _) => await Install();
@@ -224,6 +229,7 @@ public class SettingsDialog : Dialog
         _s.StartAtLogin = _login.IsChecked == true;
         _s.BackgroundAsked = true;
         _s.CheckAppUpdates = _autoUpdate.IsChecked == true;
+        _s.UpdateEngineAutomatically = _autoEngine.IsChecked == true;
         _s.EnginePath = (_enginePath.Text ?? "").Trim();
         _s.FfmpegPath = (_ffPath.Text ?? "").Trim();
     }

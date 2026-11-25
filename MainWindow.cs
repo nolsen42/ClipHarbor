@@ -100,10 +100,31 @@ public class MainWindow : Window
         if (_workStarted) return;
         _workStarted = true;
         _subTimer.Start();
-        _subTimer.Tick += (_, _) => { if (DateTime.Now - _lastUpdateCheck > TimeSpan.FromHours(24)) _ = CheckForUpdateAsync(manual: false); };
+        _subTimer.Tick += (_, _) =>
+        {
+            if (DateTime.Now - _lastUpdateCheck > TimeSpan.FromHours(24)) _ = CheckForUpdateAsync(manual: false);
+            if (DateTime.Now - _lastEngineUpdate > TimeSpan.FromHours(24)) _ = UpdateEngineQuietlyAsync();
+        };
         if (_state.Settings.SubscriptionCheckHours > 0) _ = _subs.AutoCheck();
         if (_startLinks.Count > 0) _ = HandleIncoming(_startLinks);
         _ = CheckForUpdateAsync(manual: false);
+        _ = UpdateEngineQuietlyAsync();
+    }
+
+    DateTime _lastEngineUpdate = DateTime.MinValue;
+    bool _engineUpdating;
+
+    /// <summary>Sites change often and old yt-dlp versions stop working, so ClipHarbor keeps its own copy
+    /// current. It waits while downloads run, since they use the program being replaced.</summary>
+    async Task UpdateEngineQuietlyAsync()
+    {
+        if (!_state.Settings.UpdateEngineAutomatically || _running.Count > 0 || !Engine.IsOwnEngine) return;
+        _lastEngineUpdate = DateTime.Now;
+        _engineUpdating = true;
+        string? v;
+        try { v = await Engine.UpdateEngineQuietlyAsync(CancellationToken.None); }
+        finally { _engineUpdating = false; }
+        if (v != null && !_banner.IsVisible) ShowBanner($"The download engine was updated to {v}.", null, null);
     }
 
     // ---------------- app updates ----------------
@@ -721,7 +742,7 @@ public class MainWindow : Window
         int running = _running.Count;
         foreach (var it in _state.Items.Where(i => i.Status == ItemStatus.Queued).OrderBy(i => i.Added).ToList())
         {
-            if (running >= max || _shot != null) break;
+            if (running >= max || _shot != null || _engineUpdating) break;
             Start(it);
             running++;
         }
