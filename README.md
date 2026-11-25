@@ -53,7 +53,7 @@ ClipHarbor must have been started at least once, so your computer knows it opens
 **Installing the extension:**
 
 - **Firefox (140 or newer):** open **[ClipHarbor-extension-firefox.xpi](../../releases/latest/download/ClipHarbor-extension-firefox.xpi)** in Firefox and press **Add**. It's signed by Mozilla, so it stays installed, and it updates itself when a new version comes out.
-- **Chrome, Edge, Brave, Vivaldi, Opera** (until it's in the Chrome Web Store): download `ClipHarbor-extension-chrome.zip` from the [Releases page](../../releases/latest) and unzip it. Open the extensions page (`chrome://extensions`), turn on **Developer mode**, press **Load unpacked** and pick the unzipped folder.
+- **Chrome, Edge, Brave, Vivaldi, Opera:** install **[Send to ClipHarbor from the Chrome Web Store](https://chromewebstore.google.com/detail/send-to-clipharbor/lpakdanjdcpnbnllbkldcgomomakliol)**. It updates itself. The Chrome Web Store doesn't allow YouTube downloads, so the store version doesn't send YouTube pages (every other site works). For YouTube too, install the copy from GitHub instead: download `ClipHarbor-extension-chrome.zip` from the [Releases page](../../releases/latest) and unzip it, open the extensions page (`chrome://extensions`), turn on **Developer mode**, press **Load unpacked** and pick the unzipped folder. That copy doesn't update itself. Or simply copy the YouTube link and press **Paste Link** in ClipHarbor.
 
 **No extension?** Make a bookmark with this as its address, and click it on a video page:
 
