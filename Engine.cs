@@ -495,7 +495,14 @@ public static class Engine
         if (o.Subtitles && o.Kind == MediaKind.Video)
         {
             a.AddRange(new[] { "--write-subs", "--write-auto-subs", "--sub-langs", o.SubtitleLanguages.Count > 0 ? string.Join(",", o.SubtitleLanguages) : "en.*" });
-            if (ff) { a.AddRange(new[] { "--convert-subs", "srt" }); if (o.EmbedSubtitles) a.Add("--embed-subs"); }
+            if (ff)
+            {
+                // WebM can only hold WebVTT subtitles; SRT would stay beside the video instead.
+                a.AddRange(new[] { "--convert-subs", o.EmbedSubtitles && o.Format == "webm" ? "vtt" : "srt" });
+                // yt-dlp keeps the .srt files next to the video when --write-subs is given with
+                // --embed-subs; no-keep-subs deletes them once they're inside the video.
+                if (o.EmbedSubtitles) a.AddRange(new[] { "--embed-subs", "--compat-options", "no-keep-subs" });
+            }
         }
         if (ff && s.EmbedMetadata && o.Kind != MediaKind.Animation) a.Add("--embed-metadata");
         if (ff && s.EmbedThumbnail && (o.Kind == MediaKind.Video ? o.Format is "mp4" or "mkv" : o.Format is "mp3" or "m4a" or "flac" or "opus")) a.Add("--embed-thumbnail");
