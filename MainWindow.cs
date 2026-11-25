@@ -121,11 +121,16 @@ public class MainWindow : Window
     /// current. It waits while downloads run, since they use the program being replaced.</summary>
     async Task UpdateEngineQuietlyAsync()
     {
-        if (!_state.Settings.UpdateEngineAutomatically || _running.Count > 0 || !Engine.IsOwnEngine) return;
+        if (!_state.Settings.UpdateEngineAutomatically || _running.Count > 0 || (!Engine.IsOwnEngine && !Engine.HasOldStaticFfmpeg)) return;
         _lastEngineUpdate = DateTime.Now;
         _engineUpdating = true;
         string? v;
-        try { v = await Engine.UpdateEngineQuietlyAsync(CancellationToken.None); }
+        try
+        {
+            v = await Engine.UpdateEngineQuietlyAsync(CancellationToken.None);
+            // Older versions installed a converter twice the size; swap it for the shared build once.
+            await Engine.MoveToSharedFfmpegAsync(CancellationToken.None);
+        }
         finally { _engineUpdating = false; }
         if (v != null && !_banner.IsVisible) ShowBanner($"The download engine was updated to {v}.", null, null);
     }

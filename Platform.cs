@@ -56,7 +56,9 @@ public static class Platform
     {
         get
         {
-            var d = IsMac
+            // CLIPHARBOR_TOOLS_DIR lets testers try engine installs without touching the real copy.
+            var d = Environment.GetEnvironmentVariable("CLIPHARBOR_TOOLS_DIR") is { Length: > 0 } custom ? custom
+                : IsMac
                 ? Path.Combine(Home, "Library", "Application Support", "ClipHarbor", "tools")
                 : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipHarbor", "tools");
             Directory.CreateDirectory(d);

@@ -925,7 +925,7 @@ public static class Engine
         : YtDlpBase + (Platform.IsArm ? "yt-dlp_linux_aarch64" : "yt-dlp_linux");
 
     /// <summary>Rough size of the one-time download, for messages.</summary>
-    public static string InstallSize => Platform.IsMac ? "about 100 MB" : Platform.IsLinux ? "about 200 MB" : "about 140 MB";
+    public static string InstallSize => Platform.IsMac ? "about 100 MB" : Platform.IsLinux ? "about 200 MB" : "about 110 MB";
 
     public static async Task InstallEngineAsync(IProgress<(string, double)> progress, bool withFfmpeg, CancellationToken ct)
     {
@@ -939,11 +939,7 @@ public static class Engine
             const string label = "Video converter (ffmpeg)";
             if (Platform.IsWindows)
             {
-                var zip = Path.Combine(ToolsDir, "ffmpeg.zip");
-                await FetchAsync(FfmpegBase + "ffmpeg-master-latest-win64-gpl.zip", zip, label, progress, ct);
-                progress.Report(("Unpacking video converter…", 1));
-                await Task.Run(() => ExtractFromZip(zip, "ffmpeg.exe", "ffprobe.exe"), ct);
-                File.Delete(zip);
+                await InstallWindowsFfmpegAsync(progress, ct);
             }
             else if (Platform.IsMac)
             {
@@ -968,6 +964,56 @@ public static class Engine
         }
         ForgetTools();
         progress.Report(("Ready", 1));
+    }
+
+    /// <summary>Windows uses the "shared" ffmpeg build: ffmpeg.exe and ffprobe.exe share one set of library
+    /// files (DLLs) instead of each carrying its own copy, which halves the download and the space used.
+    /// Everything is unpacked to a side folder first and then moved in, so a failure leaves the old copy working.</summary>
+    static async Task InstallWindowsFfmpegAsync(IProgress<(string, double)> progress, CancellationToken ct)
+    {
+        var zip = Path.Combine(ToolsDir, "ffmpeg.zip");
+        var stage = Path.Combine(ToolsDir, "ffmpeg-new");
+        try
+        {
+            await FetchAsync(FfmpegBase + "ffmpeg-master-latest-win64-gpl-shared.zip", zip, "Video converter (ffmpeg)", progress, ct);
+            progress.Report(("Unpacking video converter…", 1));
+            await Task.Run(() =>
+            {
+                if (Directory.Exists(stage)) Directory.Delete(stage, true);
+                Directory.CreateDirectory(stage);
+                using (var z = ZipFile.OpenRead(zip))
+                    foreach (var e in z.Entries)
+                    {
+                        // Only the programs we use and the DLLs in bin/ (not ffplay, headers or link libraries).
+                        var inBin = e.FullName.Replace('\\', '/').Contains("/bin/");
+                        var n = e.Name.ToLowerInvariant();
+                        if (inBin && (n is "ffmpeg.exe" or "ffprobe.exe" || n.EndsWith(".dll"))) e.ExtractToFile(Path.Combine(stage, n), true);
+                    }
+                if (!File.Exists(Path.Combine(stage, "ffmpeg.exe")) || !Directory.EnumerateFiles(stage, "avcodec-*.dll").Any())
+                    throw new InvalidOperationException("The converter download didn't contain what was expected.");
+                // Old library files of another version would only take up space.
+                foreach (var old in Directory.EnumerateFiles(ToolsDir, "*.dll")) try { File.Delete(old); } catch { }
+                foreach (var f in Directory.EnumerateFiles(stage)) File.Move(f, Path.Combine(ToolsDir, Path.GetFileName(f)), true);
+            }, ct);
+        }
+        finally
+        {
+            try { File.Delete(zip); } catch { }
+            try { if (Directory.Exists(stage)) Directory.Delete(stage, true); } catch { }
+        }
+        ForgetTools();
+    }
+
+    /// <summary>True when ClipHarbor's own Windows converter is the older, twice-as-large "static" build.</summary>
+    public static bool HasOldStaticFfmpeg =>
+        Platform.IsWindows && File.Exists(Path.Combine(ToolsDir, "ffmpeg.exe")) && !Directory.EnumerateFiles(ToolsDir, "avcodec-*.dll").Any();
+
+    /// <summary>Swaps an older static converter for the shared build. Quiet; returns whether it was done.</summary>
+    public static async Task<bool> MoveToSharedFfmpegAsync(CancellationToken ct)
+    {
+        if (!HasOldStaticFfmpeg) return false;
+        try { await InstallWindowsFfmpegAsync(new Progress<(string, double)>(_ => { }), ct); return true; }
+        catch { return false; }
     }
 
     static void ExtractFromZip(string zip, params string[] names)
