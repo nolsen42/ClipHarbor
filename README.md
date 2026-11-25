@@ -35,6 +35,8 @@ Get the latest version from the **[Releases page](../../releases/latest)** and d
 | Linux (most PCs) | `ClipHarbor-linux-x64.AppImage` | Allow it to run (right-click → Properties → "Allow executing as program", or `chmod +x ClipHarbor-linux-x64.AppImage`) and double-click it. |
 | Linux on ARM (e.g. Raspberry Pi 4/5) | `ClipHarbor-linux-arm64.AppImage` | Same as above. |
 
+**Android (phones with a 64-bit ARM chip, Android 7 or newer):** download `ClipHarbor-android.apk` on your phone and open it. Android asks to allow installing apps from your browser or file manager the first time. ClipHarbor isn't in the Google Play Store, which doesn't allow YouTube downloaders. To download, press **Share** in YouTube, X, Reddit or any other app and pick **ClipHarbor**, or paste a link. Files are saved in **Download/ClipHarbor**. Long-press a finished download to share it, make a GIF, or make it small enough for Discord. ClipHarbor offers its own updates; Android asks before installing them.
+
 **Linux without AppImage:** the `.tar.gz` files have the same program. Unpack (`tar -xzf ClipHarbor-linux-x64.tar.gz`) and run `ClipHarbor/ClipHarbor`. If the AppImage doesn't start, run it once from a terminal with `--appimage-extract-and-run` after its name; that works even where AppImages can't be opened directly. To add it to your app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or AppImageLauncher.
 
 **Updates:** ClipHarbor checks this repository's Releases when it starts and once a day. When there's a newer version it shows a banner; press **Update now** to see what's new, and it downloads the update, checks it against the checksum GitHub publishes, and restarts. You can turn the automatic check off, or check by hand, under **Settings → About ClipHarbor**. If ClipHarbor can't replace itself where it's installed (for example in Program Files), it opens the download page instead.
@@ -112,6 +114,18 @@ The button needs a repository secret named `RELEASE_TOKEN` (set up once). GitHub
 4. Generate it, copy it, and add it in this repository under **Settings → Secrets and variables → Actions → New repository secret** with the name `RELEASE_TOKEN`.
 
 When the token expires, make a new one the same way and replace the secret.
+
+**Android signing key (set up once, keep it forever).** Phones only install an update over ClipHarbor when it's signed with the same key as before, so releases need one permanent key. Make it with the `keytool` that comes with Java (it asks for a password; use a long one and save it in your password manager):
+
+```
+keytool -genkeypair -v -keystore clipharbor-release.keystore -alias clipharbor -keyalg RSA -keysize 4096 -validity 36500
+```
+
+Then add three repository secrets: `ANDROID_KEYSTORE` (the file as base64; in PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("clipharbor-release.keystore"))`), `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS` (`clipharbor`). **Back up the keystore file and its password somewhere safe and never commit it**: if it's lost, existing installs can't be updated and everyone has to uninstall and reinstall.
+
+### Building for Android
+
+Install the Android tools once with `dotnet workload install android` (as administrator on Windows), then build the APK with `dotnet build android/ClipHarbor.Android.csproj -c Release`. The project shares the engine, models and look with the desktop app; Android-only code is in `android/`. yt-dlp, Python and ffmpeg come from [youtubedl-android](https://github.com/yausername/youtubedl-android).
 
 ### Screenshot option
 

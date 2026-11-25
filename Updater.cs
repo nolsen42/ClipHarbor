@@ -12,11 +12,14 @@ public record UpdateInfo(Version Version, string Tag, string PageUrl, string Not
 public static class Updater
 {
     /// <summary>"owner/name" of the GitHub repository. The build fills it in; this is the fallback.</summary>
+    // ClipHarbor's own assembly (on Android the process isn't started by it, so there's no "entry" assembly).
+    static readonly Assembly Self = typeof(Updater).Assembly;
+
     public static string Repo =>
-        Assembly.GetEntryAssembly()?.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "UpdateRepo")?.Value
+        Self.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "UpdateRepo")?.Value
         is { Length: > 0 } r ? r : "nolsen42/ClipHarbor";
 
-    public static Version Current => Normalize(Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0));
+    public static Version Current => Normalize(Self.GetName().Version ?? new Version(0, 0));
     public static string CurrentText => Current.ToString(3);
 
     public const string AfterUpdateFlag = "--after-update";
@@ -25,7 +28,8 @@ public static class Updater
 
     /// <summary>The release file made for this computer.</summary>
     static string AssetName =>
-        Platform.IsWindows ? "ClipHarbor-windows-x64.exe"
+        Platform.IsAndroid ? "ClipHarbor-android.apk"
+        : Platform.IsWindows ? "ClipHarbor-windows-x64.exe"
         : Platform.IsMac ? (Platform.IsArm ? "ClipHarbor-macos-apple-silicon.zip" : "ClipHarbor-macos-intel.zip")
         : "ClipHarbor-linux-" + (Platform.IsArm ? "arm64" : "x64") + (Platform.AppImage != null ? ".AppImage" : ".tar.gz");
 
@@ -153,6 +157,10 @@ public static class Updater
         try { if (Directory.Exists(old)) Directory.Delete(old, true); else if (File.Exists(old)) File.Delete(old); } catch { }
     }
 
+    /// <summary>Downloads the update's file and checks it against GitHub's checksum (used directly on Android,
+    /// which then hands the APK to the system installer).</summary>
+    public static Task DownloadAsync(UpdateInfo u, string dest, IProgress<(string, double)> progress, CancellationToken ct) => DownloadCheckedAsync(u, dest, progress, ct);
+
     static async Task DownloadCheckedAsync(UpdateInfo u, string dest, IProgress<(string, double)> progress, CancellationToken ct)
     {
         using var resp = await Engine.Http.GetAsync(u.AssetUrl, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -192,7 +200,9 @@ public static class Updater
     public static void Launch(string program, bool hidden = false)
     {
         var args = new List<string> { AfterUpdateFlag, Environment.ProcessId.ToString() };
+#if !ANDROID // (phones hand the APK to Android's installer instead)
         if (hidden) args.Add(StartAtLogin.Flag); // stay in the tray, like the copy it replaces
+#endif
         if (Platform.IsMac && InstallTarget(program) is var bundle && bundle.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
         {
             var psi = new ProcessStartInfo("open") { UseShellExecute = false };

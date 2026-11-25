@@ -55,7 +55,7 @@ public class PhoneView : Grid
         input.Children.AddRange(new Control[] { _link, paste, go });
 
         _banner.Child = _bannerText;
-        _banner.Tapped += (_, _) => _banner.IsVisible = false;
+        _banner.Tapped += (_, _) => { var a = _bannerAction; _banner.IsVisible = false; a?.Invoke(); };
 
         // Downloads
         _list.Source = _state.Items;
@@ -130,11 +130,35 @@ public class PhoneView : Grid
         {
             var v = await AndroidSetup.Runner.UpdateAsync();
             if (v != null) Dispatcher.UIThread.Post(() => { if (!_banner.IsVisible) Banner($"The download engine was updated to {v}.", false); });
+            // A newer ClipHarbor on GitHub: offer it (Android asks before installing).
+            try
+            {
+                if (await Updater.CheckAsync(CancellationToken.None) is { AssetUrl.Length: > 0 } u)
+                    Dispatcher.UIThread.Post(() => Banner($"ClipHarbor {u.Version.ToString(3)} is available. Tap to update.", false, () => _ = UpdateApp(u)));
+            }
+            catch { }
         });
     }
 
-    void Banner(string text, bool warn)
+    async Task UpdateApp(UpdateInfo u)
     {
+        var dir = Path.Combine(AndroidSetup.App.CacheDir!.AbsolutePath, "updates");
+        Directory.CreateDirectory(dir);
+        foreach (var old in Directory.EnumerateFiles(dir)) try { File.Delete(old); } catch { }
+        var apk = Path.Combine(dir, "ClipHarbor.apk");
+        var prog = new Progress<(string text, double frac)>(p => Banner(p.text + (p.frac > 0 && p.frac < 1 ? $"  ({p.frac * 100:0}%)" : ""), false));
+        try { await Updater.DownloadAsync(u, apk, prog, CancellationToken.None); }
+        catch (Exception ex) { Banner("Couldn't download the update: " + ex.Message, true, () => _ = UpdateApp(u)); return; }
+        if (AndroidSetup.InstallApk(apk)) _banner.IsVisible = false;
+        else Banner("Allow ClipHarbor to install apps, then tap here to update.", false, () => AndroidSetup.InstallApk(apk));
+    }
+
+    Action? _bannerAction;
+
+    /// <summary>A message under the link box. Tapping it closes it, or runs <paramref name="onTap"/>.</summary>
+    void Banner(string text, bool warn, Action? onTap = null)
+    {
+        _bannerAction = onTap;
         _bannerText.Text = text;
         _banner.Classes.Set("warn", warn);
         _banner.IsVisible = true;

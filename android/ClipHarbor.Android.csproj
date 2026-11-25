@@ -32,6 +32,7 @@
     <Compile Include="..\Platform.cs" Link="Shared\Platform.cs" />
     <Compile Include="..\Ui.cs" Link="Shared\Ui.cs" />
     <Compile Include="..\DownloadList.cs" Link="Shared\DownloadList.cs" />
+    <Compile Include="..\Updater.cs" Link="Shared\Updater.cs" />
     <AvaloniaXaml Include="..\App.axaml" Link="App.axaml" />
     <AndroidResource Include="..\assets\ClipHarbor.png" Link="Resources\drawable\appicon.png" />
   </ItemGroup>

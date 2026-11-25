@@ -60,6 +60,28 @@ public static class AndroidSetup
         catch { }
     }
 
+    /// <summary>Opens Android's "Update this app?" screen for a downloaded APK. If ClipHarbor isn't allowed
+    /// to install apps yet, opens that setting instead and returns false (tap Update again afterwards).</summary>
+    public static bool InstallApk(string path)
+    {
+        try
+        {
+            if (OperatingSystem.IsAndroidVersionAtLeast(26) && !App.PackageManager!.CanRequestPackageInstalls())
+            {
+                var allow = new Intent(Android.Provider.Settings.ActionManageUnknownAppSources, Android.Net.Uri.Parse("package:" + App.PackageName));
+                App.StartActivity(allow.AddFlags(ActivityFlags.NewTask));
+                return false;
+            }
+            var uri = FileProvider.GetUriForFile(App, "io.github.clipharbor.files", new Java.IO.File(path));
+            var install = new Intent(Intent.ActionView);
+            install.SetDataAndType(uri, "application/vnd.android.package-archive");
+            install.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.NewTask);
+            App.StartActivity(install);
+            return true;
+        }
+        catch { return false; }
+    }
+
     /// <summary>Android's share sheet for a downloaded file (Discord, messages, Drive...).</summary>
     public static void Share(string path)
     {
