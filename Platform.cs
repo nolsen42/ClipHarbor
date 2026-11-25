@@ -98,7 +98,12 @@ public static class Platform
 
     public static void ShowInFolder(string file)
     {
-        if (IsWindows) Run("explorer.exe", "/select," + file);
+        if (IsWindows)
+        {
+            // Explorer wants /select,"path" with only the path quoted; quoting the whole argument
+            // (what ArgumentList does for paths with spaces) opens the folder without selecting.
+            try { Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + file + "\"") { UseShellExecute = false })?.Dispose(); } catch { }
+        }
         else if (IsMac) Run("open", "-R", file);
         else Open(Path.GetDirectoryName(file) ?? file);
     }

@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -583,15 +584,44 @@ public class MainWindow : Window
     void OpenFile(DownloadItem it)
     {
         if (File.Exists(it.FilePath)) Platform.Open(it.FilePath);
-        else ShowInFolder(it);
+        else FileMissing(it, play: true);
     }
 
     void ShowInFolder(DownloadItem it)
     {
         if (File.Exists(it.FilePath)) { Platform.ShowInFolder(it.FilePath); return; }
+        if (it.Status == ItemStatus.Done) { FileMissing(it, play: false); return; }
+        var f = ItemFolder(it);
+        if (Directory.Exists(f)) Platform.OpenFolder(f);
+    }
+
+    static string ItemFolder(DownloadItem it)
+    {
+        var d = Path.GetDirectoryName(it.FilePath);
+        if (!string.IsNullOrEmpty(d) && Directory.Exists(d)) return d;
         var f = it.Options.Folder;
         if (it.Options.PlaylistSubfolder && it.Playlist.Length > 0) { var sub = Path.Combine(f, Engine.SafeName(it.Playlist)); if (Directory.Exists(sub)) f = sub; }
-        if (Directory.Exists(f)) Platform.OpenFolder(f);
+        return f;
+    }
+
+    /// <summary>The file was renamed, moved or deleted outside ClipHarbor: say so and offer to point to it.</summary>
+    void FileMissing(DownloadItem it, bool play)
+    {
+        var name = string.IsNullOrEmpty(it.FilePath) ? it.Title : Path.GetFileName(it.FilePath);
+        ShowBanner($"Can't find \"{name}\". It may have been renamed, moved or deleted.", "Find it…", () => _ = FindFile(it, play), true);
+    }
+
+    async Task FindFile(DownloadItem it, bool play)
+    {
+        IStorageFolder? start = null;
+        try { var f = ItemFolder(it); if (Directory.Exists(f)) start = await StorageProvider.TryGetFolderFromPathAsync(f); } catch { }
+        var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Find " + it.Title, SuggestedStartLocation = start });
+        var path = picked.FirstOrDefault()?.TryGetLocalPath();
+        if (path == null || !File.Exists(path)) return;
+        it.FilePath = path;
+        it.TotalBytes = new FileInfo(path).Length;
+        Changed();
+        if (play) Platform.Open(path); else Platform.ShowInFolder(path);
     }
 
     ContextMenu BuildMenu()
