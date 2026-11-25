@@ -90,10 +90,15 @@ public static class Engine
 
     public static void ForgetTools() { lock (ToolLock) _toolsFound = DateTime.MinValue; }
 
-    public static string? YtDlp { get { FindTools(); return _ytDlp; } }
-    public static string? Ffmpeg { get { FindTools(); return _ffmpeg; } }
-    public static bool HasEngine => YtDlp != null;
-    public static bool HasFfmpeg => Ffmpeg != null;
+    public static string? YtDlp { get { if (Runner != null) return null; FindTools(); return _ytDlp; } }
+    public static string? Ffmpeg { get { if (Runner != null) return Runner.FfmpegPath; FindTools(); return _ffmpeg; } }
+    public static bool HasEngine => Runner != null || YtDlp != null;
+    /// <summary>Whether yt-dlp can use ffmpeg (joining video and sound, converting, cutting).</summary>
+    public static bool HasFfmpeg => Runner != null || Ffmpeg != null;
+
+    /// <summary>Set where yt-dlp can't be started as a program (Android, where youtubedl-android runs it).
+    /// Everything else (options, progress, errors) works the same.</summary>
+    public static IYtDlpRunner? Runner;
 
     static readonly string[] DirectExt = { ".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".ogg", ".opus", ".wav", ".flac", ".aac", ".flv", ".wmv", ".3gp", ".gif" };
 
@@ -152,6 +157,7 @@ public static class Engine
             StandardErrorEncoding = Encoding.UTF8,
         };
         psi.Environment["PYTHONIOENCODING"] = "utf-8";
+        if (Runner != null) foreach (var (k, v) in Runner.FfmpegEnvironment) psi.Environment[k] = v;
         foreach (var a in args) psi.ArgumentList.Add(a);
         return psi;
     }
@@ -165,13 +171,15 @@ public static class Engine
         var a = new List<string> { "--encoding", "utf-8", "--no-warnings" };
         if (!string.IsNullOrWhiteSpace(Settings.Proxy)) { a.Add("--proxy"); a.Add(Settings.Proxy.Trim()); }
         if (signIn && BrowserChosen) { a.Add("--cookies-from-browser"); a.Add(Settings.CookiesBrowser.Trim().ToLowerInvariant()); }
-        var ff = Ffmpeg;
+        // (youtubedl-android passes its own ffmpeg to yt-dlp.)
+        var ff = Runner == null ? Ffmpeg : null;
         if (ff != null) { a.Add("--ffmpeg-location"); a.Add(Path.GetDirectoryName(ff)!); }
         return a;
     }
 
     static async Task<(int code, string stdout, string stderr)> RunAsync(IEnumerable<string> args, CancellationToken ct)
     {
+        if (Runner != null) return await Runner.RunAsync(args.ToList(), null, ct);
         var exe = YtDlp ?? throw new InvalidOperationException("The download engine isn't installed yet.");
         using var p = Process.Start(Psi(exe, args))!;
         using var reg = ct.Register(() => { try { p.Kill(true); } catch { } });
@@ -714,8 +722,19 @@ public static class Engine
 
     static async Task YtDlpOnceAsync(DownloadItem it, bool signIn, CancellationToken ct)
     {
-        var exe = YtDlp ?? throw new InvalidOperationException("The download engine isn't installed. Open Settings → Engine to install it.");
         Directory.CreateDirectory(string.IsNullOrWhiteSpace(it.Options.Folder) ? AppState.DefaultFolder() : it.Options.Folder);
+        int stage = 0; long lastTotal = 0;
+        if (Runner != null)
+        {
+            var (code, o, e) = await Runner.RunAsync(BuildDownloadArgs(it, signIn), line => OnLine(line), ct);
+            ct.ThrowIfCancellationRequested();
+            if (code != 0) throw Fail(e, signIn);
+            // In case the lines didn't all come through while it ran.
+            foreach (var l in o.Split('\n')) if (l.StartsWith("@@F ")) it.FilePath = l[4..].Trim();
+            if (!string.IsNullOrEmpty(it.FilePath) && File.Exists(it.FilePath)) it.TotalBytes = new FileInfo(it.FilePath).Length;
+            return;
+        }
+        var exe = YtDlp ?? throw new InvalidOperationException("The download engine isn't installed. Open Settings → Engine to install it.");
         var psi = Psi(exe, BuildDownloadArgs(it, signIn));
         using var p = Process.Start(psi)!;
         using var reg = ct.Register(() => { try { p.Kill(true); } catch { } });
@@ -725,9 +744,21 @@ public static class Engine
             string? l;
             while ((l = await p.StandardError.ReadLineAsync()) != null) lock (err) { err.AppendLine(l); }
         });
-        int stage = 0; long lastTotal = 0;
         string? line;
-        while ((line = await p.StandardOutput.ReadLineAsync()) != null)
+        while ((line = await p.StandardOutput.ReadLineAsync()) != null) OnLine(line);
+        await p.WaitForExitAsync();
+        await errTask;
+        ct.ThrowIfCancellationRequested();
+        if (p.ExitCode != 0)
+        {
+            string e; lock (err) e = err.ToString();
+            throw Fail(e, signIn);
+        }
+        if (!string.IsNullOrEmpty(it.FilePath) && File.Exists(it.FilePath))
+            it.TotalBytes = new FileInfo(it.FilePath).Length;
+
+        // One line of yt-dlp's output: progress, the finished file, or a processing step.
+        void OnLine(string line)
         {
             if (line.StartsWith("@@P "))
             {
@@ -752,16 +783,6 @@ public static class Engine
                 it.Phase = "processing"; it.Progress = 1;
             }
         }
-        await p.WaitForExitAsync();
-        await errTask;
-        ct.ThrowIfCancellationRequested();
-        if (p.ExitCode != 0)
-        {
-            string e; lock (err) e = err.ToString();
-            throw Fail(e, signIn);
-        }
-        if (!string.IsNullOrEmpty(it.FilePath) && File.Exists(it.FilePath))
-            it.TotalBytes = new FileInfo(it.FilePath).Length;
     }
 
     // ---------- GIF / WebP ----------
@@ -1111,6 +1132,17 @@ public static class Engine
 }
 
 /// <summary>The site wants the person to be signed in; signing in through a browser in Settings may fix it.</summary>
+/// <summary>Runs yt-dlp somewhere it can't be started as a normal program (youtubedl-android on phones).</summary>
+public interface IYtDlpRunner
+{
+    /// <summary>Runs yt-dlp with these options (the link last), calling <paramref name="onLine"/> for each line it prints.</summary>
+    Task<(int code, string stdout, string stderr)> RunAsync(IReadOnlyList<string> args, Action<string>? onLine, CancellationToken ct);
+    /// <summary>The ffmpeg program ClipHarbor can run itself (GIFs, making videos smaller), or null.</summary>
+    string? FfmpegPath { get; }
+    /// <summary>Settings ffmpeg needs to start, such as where its libraries are.</summary>
+    IReadOnlyDictionary<string, string> FfmpegEnvironment { get; }
+}
+
 public class SignInNeededException(string message, SignInProblem problem) : InvalidOperationException(message)
 {
     public SignInProblem Problem { get; } = problem;

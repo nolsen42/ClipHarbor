@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- Saving into Download/ClipHarbor on Android 9 and older. -->
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+  <application android:label="ClipHarbor" android:icon="@drawable/appicon"
+               android:extractNativeLibs="true" android:requestLegacyExternalStorage="true">
+    <!-- Lets the video player open finished downloads. -->
+    <provider android:name="androidx.core.content.FileProvider"
+              android:authorities="io.github.clipharbor.files"
+              android:exported="false" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+    </provider>
+  </application>
+</manifest>

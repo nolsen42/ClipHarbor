@@ -21,6 +21,14 @@
     <UpdateRepo Condition="'$(UpdateRepo)' == ''">nolsen42/ClipHarbor</UpdateRepo>
   </PropertyGroup>
 
+  <!-- The Android app has its own project in android/ and shares some of these files. -->
+  <ItemGroup>
+    <Compile Remove="android/**" />
+    <AvaloniaXaml Remove="android/**" />
+    <None Remove="android/**" />
+    <EmbeddedResource Remove="android/**" />
+  </ItemGroup>
+
   <ItemGroup>
     <AssemblyMetadata Include="UpdateRepo" Value="$(UpdateRepo)" />
     <AvaloniaResource Include="assets\ClipHarbor.ico" />

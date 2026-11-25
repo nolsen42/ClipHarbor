@@ -115,6 +115,9 @@ public class RowView : Border
     readonly Button _remove = Ui.IconButton(Icons.Close, "Remove from list");
     DownloadItem? _item;
 
+    /// <summary>Phone layout: smaller picture, a progress bar that fits the width, no folder button.</summary>
+    public static bool Compact;
+
     public RowView(DownloadList owner)
     {
         _owner = owner;
@@ -122,6 +125,12 @@ public class RowView : Border
         Margin = new Thickness(0, 0, 0, 6);
         Padding = new Thickness(10, 7);
         Height = 78;
+        if (Compact)
+        {
+            _thumb = new Thumbs.View(88, 50);
+            _bar.Width = 90;
+            _folder.IsVisible = false;
+        }
 
         var statusRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*"), Margin = new Thickness(0, 4, 0, 0) };
         statusRow.Children.Add(_bar);

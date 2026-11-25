@@ -10,6 +10,12 @@ public static class Platform
     public static bool IsMac => OperatingSystem.IsMacOS();
     public static bool IsLinux => OperatingSystem.IsLinux();
     public static bool IsArm => RuntimeInformation.OSArchitecture == Architecture.Arm64;
+    public static bool IsAndroid => OperatingSystem.IsAndroid();
+
+    /// <summary>Set by the Android app, which has its own ways to find folders, open files and show notices.</summary>
+    public static Func<string>? AndroidVideosDir;
+    public static Action<string>? AndroidOpen;
+    public static Action<string, string>? AndroidNotify;
 
     /// <summary>The .AppImage file this copy runs from (Linux), or null. Inside an AppImage the program runs
     /// from a temporary read-only folder ($APPDIR), so anything that starts or replaces the app must use
@@ -68,6 +74,7 @@ public static class Platform
 
     public static string VideosDir()
     {
+        if (AndroidVideosDir != null) return AndroidVideosDir();
         var v = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
         if (IsMac) v = Path.Combine(Home, "Movies");
         if (string.IsNullOrEmpty(v) || (IsLinux && !Directory.Exists(v)))
@@ -111,6 +118,7 @@ public static class Platform
     /// <summary>Opens a file or web address with the program the system uses for it.</summary>
     public static void Open(string target)
     {
+        if (AndroidOpen != null) { AndroidOpen(target); return; }
         if (IsWindows)
         {
             try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true })?.Dispose(); } catch { }
@@ -172,7 +180,8 @@ public static class Platform
     /// <summary>A small system notice. On Windows the taskbar button flashes instead.</summary>
     public static void Notify(string title, string body, IntPtr windowHandle)
     {
-        if (IsMac)
+        if (AndroidNotify != null) AndroidNotify(title, body);
+        else if (IsMac)
             Run("osascript", "-e", $"display notification {AppleText(body)} with title {AppleText(title)}");
         else if (IsLinux)
             Run("notify-send", "--app-name=ClipHarbor", title, body);

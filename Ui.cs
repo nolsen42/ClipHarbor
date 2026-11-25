@@ -226,7 +226,9 @@ public class Dialog : Window
         ShowInTaskbar = false;
         SizeToContent = SizeToContent.WidthAndHeight;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
+#if !ANDROID // (phones have no windows; the Android app doesn't use these dialogs)
         Icon = MainWindow.AppIcon;
+#endif
         KeyDown += (_, e) => { if (e.Key == Key.Escape) Close(false); };
         // Give the content the window's colour too, so screenshots of it aren't see-through.
         Opened += (_, _) => { if (Content is Panel p && p.Background == null) p[!Panel.BackgroundProperty] = this[!BackgroundProperty]; };
