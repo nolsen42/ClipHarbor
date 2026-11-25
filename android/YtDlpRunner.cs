@@ -75,7 +75,8 @@ public sealed class YtDlpRunner : IYtDlpRunner
         });
     }
 
-    /// <summary>yt-dlp's callback: (percent, seconds left, the line it printed).</summary>
+    /// <summary>yt-dlp's callback: (percent, seconds left, the line it printed). youtubedl-android only calls it
+    /// for lines shaped like "[download]  45.3% ... ETA 01:23", which is why Engine shapes its progress line that way.</summary>
     sealed class LineCallback(Action<string> onLine) : Java.Lang.Object, Kotlin.Jvm.Functions.IFunction3
     {
         public Java.Lang.Object? Invoke(Java.Lang.Object? p0, Java.Lang.Object? p1, Java.Lang.Object? p2)

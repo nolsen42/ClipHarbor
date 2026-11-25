@@ -148,7 +148,7 @@ public class PhoneView : Grid
         var heights = new List<int> { 0 };
         var labels = new List<string> { "Best available" };
         foreach (var h in (info.Heights.Count > 0 ? info.Heights : new List<int> { 2160, 1440, 1080, 720, 480, 360 })
-                     .Select(h => h >= 2160 ? 2160 : h >= 1440 ? 1440 : h >= 1080 ? 1080 : h >= 720 ? 720 : h >= 480 ? 480 : h >= 360 ? 360 : 240).Distinct())
+                     .Select(h => h >= 2160 ? 2160 : h >= 1440 ? 1440 : h >= 1080 ? 1080 : h >= 720 ? 720 : h >= 480 ? 480 : h >= 360 ? 360 : 240).Distinct().OrderByDescending(h => h))
         {
             heights.Add(h);
             var size = info.SizeByHeight.Where(kv => kv.Key <= h).OrderByDescending(kv => kv.Key).Select(kv => kv.Value).FirstOrDefault();
@@ -156,8 +156,10 @@ public class PhoneView : Grid
         }
         quality.ItemsSource = labels;
         var sel = heights.IndexOf(o.MaxHeight);
+        // Not offered for this video: the best one that isn't above the usual choice.
         if (sel < 0 && o.MaxHeight > 0) sel = heights.FindIndex(v => v > 0 && v <= o.MaxHeight);
         quality.SelectedIndex = Math.Max(0, sel < 0 ? heights.IndexOf(1080) : sel);
+        int shownFirst = quality.SelectedIndex;
         var audioFormat = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, ItemsSource = new[] { "MP3", "M4A", "OPUS" } };
         audioFormat.SelectedIndex = Math.Max(0, Array.IndexOf(new[] { "mp3", "m4a", "opus" }, o.Format));
         void KindChanged() { quality.IsVisible = video.IsChecked == true; audioFormat.IsVisible = audio.IsChecked == true; }
@@ -209,12 +211,20 @@ public class PhoneView : Grid
         ok.Click += (_, _) =>
         {
             o.Kind = audio.IsChecked == true ? MediaKind.Audio : MediaKind.Video;
-            if (o.Kind == MediaKind.Video) { o.Format = "mp4"; o.MaxHeight = heights[Math.Max(0, quality.SelectedIndex)]; }
+            if (o.Kind == MediaKind.Video) o.Format = "mp4";
             else o.Format = new[] { "mp3", "m4a", "opus" }[Math.Max(0, audioFormat.SelectedIndex)];
             o.TargetSizeMB = 0;
             o.Folder = AppState.DefaultFolder();
+            var download = o.Clone();
+            if (o.Kind == MediaKind.Video)
+            {
+                download.MaxHeight = heights[Math.Max(0, quality.SelectedIndex)];
+                // Only a quality picked by hand becomes the new usual one; a video that simply
+                // doesn't offer the usual quality shouldn't lower it for the next one.
+                if (quality.SelectedIndex != shownFirst) o.MaxHeight = download.MaxHeight;
+            }
             _state.Settings.LastOptions = o.Clone();
-            Queue(info, o);
+            Queue(info, download);
             _sheet.IsVisible = false;
         };
     }

@@ -456,7 +456,10 @@ public static class Engine
         var a = CommonArgs(signIn);
         bool ff = HasFfmpeg;
         a.AddRange(new[] { "--newline", "--no-playlist", "--no-mtime", "--progress", "--no-simulate" });
-        a.AddRange(new[] { "--progress-template", "download:@@P %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s" });
+        const string P = "@@P %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s";
+        // youtubedl-android only passes on lines shaped like yt-dlp's own "[download]  45.3% ... ETA 01:23",
+        // so on Android the line starts that way and carries ClipHarbor's numbers after @@P.
+        a.AddRange(new[] { "--progress-template", Runner != null ? $"download:[download] %(progress._percent_str)s {P} ETA 0:0" : "download:" + P });
         a.AddRange(new[] { "--print", "after_move:@@F %(filepath)s" });
 
         var folder = string.IsNullOrWhiteSpace(o.Folder) ? AppState.DefaultFolder() : o.Folder;
@@ -760,9 +763,10 @@ public static class Engine
         // One line of yt-dlp's output: progress, the finished file, or a processing step.
         void OnLine(string line)
         {
-            if (line.StartsWith("@@P "))
+            int at = line.IndexOf("@@P ", StringComparison.Ordinal);
+            if (at >= 0)
             {
-                var parts = line[4..].Split(' ');
+                var parts = line[(at + 4)..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 long done = ParseL(parts, 0), total = ParseL(parts, 1), est = ParseL(parts, 2);
                 double speed = ParseD(parts, 3), eta = ParseD(parts, 4);
                 if (total <= 0) total = est;
@@ -773,6 +777,9 @@ public static class Engine
                 it.Progress = total > 0 ? Math.Clamp((double)done / total, 0, 1) : 0;
                 it.Speed = speed; it.Eta = eta > 0 ? eta : -1;
                 it.Phase = stage == 0 ? "" : "audio";
+                // On Android the "[Merger]"/"[ExtractAudio]" lines don't come through, so a finished
+                // part counts as "finishing up" until the next part's progress arrives.
+                if (Runner != null && total > 0 && done >= total) it.Phase = "processing";
             }
             else if (line.StartsWith("@@F "))
             {
