@@ -67,6 +67,9 @@ public class SettingsDialog : Dialog
         Section("General");
         _theme.SelectedItem = s.Theme;
         if (_theme.SelectedIndex < 0) _theme.SelectedIndex = 0;
+        // Show the look straight away; Cancel (or closing) goes back to the saved one.
+        _theme.SelectionChanged += (_, _) => App.ApplyTheme(_theme.SelectedItem?.ToString() ?? "Light");
+        Closed += (_, _) => App.ApplyTheme(_s.Theme);
         Row("Look", _theme);
         _parallel.Value = Math.Clamp(s.MaxConcurrent, 1, 32);
         Row("Downloads at the same time", _parallel, "no cap");
