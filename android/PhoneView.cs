@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -115,7 +116,7 @@ public class PhoneView : Grid
 
     async Task<string> ClipboardText()
     {
-        try { return (await TopLevel.GetTopLevel(this)!.Clipboard!.GetTextAsync())?.Trim() ?? ""; } catch { return ""; }
+        try { return (await TopLevel.GetTopLevel(this)!.Clipboard!.TryGetTextAsync())?.Trim() ?? ""; } catch { return ""; }
     }
 
     /// <summary>A link shared from another app.</summary>
