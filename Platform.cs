@@ -11,6 +11,26 @@ public static class Platform
     public static bool IsLinux => OperatingSystem.IsLinux();
     public static bool IsArm => RuntimeInformation.OSArchitecture == Architecture.Arm64;
 
+    /// <summary>The .AppImage file this copy runs from (Linux), or null. Inside an AppImage the program runs
+    /// from a temporary read-only folder ($APPDIR), so anything that starts or replaces the app must use
+    /// the .AppImage file ($APPIMAGE) instead. Both are checked, so a variable inherited from another
+    /// AppImage that started this copy isn't taken for ours.</summary>
+    public static string? AppImage
+    {
+        get
+        {
+            if (!IsLinux) return null;
+            var file = Environment.GetEnvironmentVariable("APPIMAGE");
+            var dir = Environment.GetEnvironmentVariable("APPDIR");
+            var exe = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(file) || string.IsNullOrEmpty(dir) || exe == null || !File.Exists(file)) return null;
+            return exe.StartsWith(dir.TrimEnd('/') + "/", StringComparison.Ordinal) ? file : null;
+        }
+    }
+
+    /// <summary>The program file to start, register or replace: the .AppImage when there is one.</summary>
+    public static string? AppPath => AppImage ?? Environment.ProcessPath;
+
     /// <summary>File name of a program: "yt-dlp.exe" on Windows, "yt-dlp" elsewhere.</summary>
     public static string Exe(string name) => IsWindows ? name + ".exe" : name;
 

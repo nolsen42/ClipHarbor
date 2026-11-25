@@ -68,7 +68,7 @@ public static class StartAtLogin
     public const string Flag = "--background";
     const string Name = "ClipHarbor";
 
-    static string Exe => Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, Platform.Exe("ClipHarbor"));
+    static string Exe => Platform.AppPath ??Path.Combine(AppContext.BaseDirectory, Platform.Exe("ClipHarbor"));
     static string Home => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     static string MacAgent => Path.Combine(Home, "Library", "LaunchAgents", "io.github.clipharbor.plist");
     static string LinuxAutostart => Path.Combine(

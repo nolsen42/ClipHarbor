@@ -28,8 +28,10 @@ Get the latest version from the **[Releases page](../../releases/latest)** and d
 | Windows (64-bit) | `ClipHarbor-windows-x64.exe` | Run it. No installation needed. |
 | Mac with Apple chip (M1 and later) | `ClipHarbor-macos-apple-silicon.zip` | Unzip and move **ClipHarbor** to Applications. |
 | Mac with Intel chip | `ClipHarbor-macos-intel.zip` | Same as above. |
-| Linux (most PCs) | `ClipHarbor-linux-x64.tar.gz` | Unpack (`tar -xzf ClipHarbor-linux-x64.tar.gz`) and run `ClipHarbor/ClipHarbor`. |
-| Linux on ARM (e.g. Raspberry Pi 4/5) | `ClipHarbor-linux-arm64.tar.gz` | Same as above. |
+| Linux (most PCs) | `ClipHarbor-linux-x64.AppImage` | Allow it to run (right-click → Properties → "Allow executing as program", or `chmod +x ClipHarbor-linux-x64.AppImage`) and double-click it. |
+| Linux on ARM (e.g. Raspberry Pi 4/5) | `ClipHarbor-linux-arm64.AppImage` | Same as above. |
+
+**Linux without AppImage:** the `.tar.gz` files have the same program. Unpack (`tar -xzf ClipHarbor-linux-x64.tar.gz`) and run `ClipHarbor/ClipHarbor`. If the AppImage doesn't start, run it once from a terminal with `--appimage-extract-and-run` after its name; that works even where AppImages can't be opened directly. To add it to your app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or AppImageLauncher.
 
 **Updates:** ClipHarbor checks this repository's Releases when it starts and once a day. When there's a newer version it shows a banner; press **Update now** to see what's new, and it downloads the update, checks it against the checksum GitHub publishes, and restarts. You can turn the automatic check off, or check by hand, under **Settings → About ClipHarbor**. If ClipHarbor can't replace itself where it's installed (for example in Program Files), it opens the download page instead.
 
@@ -92,7 +94,7 @@ To make a single program file that runs without .NET installed, pick your system
 dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish
 ```
 
-GitHub Actions (see `.github/workflows/build.yml`) builds all five versions, wraps the Mac ones as a `.app`, and checks that the app starts on each system. It also zips the browser extension, and for releases has Mozilla sign the Firefox copy when the repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` hold API keys from [addons.mozilla.org](https://addons.mozilla.org/developers/addon/api/key/).
+GitHub Actions (see `.github/workflows/build.yml`) builds all five versions, wraps the Mac ones as a `.app` and the Linux ones as an AppImage (with [appimagetool](https://github.com/AppImage/appimagetool)) and a `.tar.gz`, and checks that the app starts on each system. It also zips the browser extension, and for releases has Mozilla sign the Firefox copy when the repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` hold API keys from [addons.mozilla.org](https://addons.mozilla.org/developers/addon/api/key/).
 
 ### Publishing a release
 

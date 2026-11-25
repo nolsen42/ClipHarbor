@@ -96,6 +96,31 @@ jobs:
           chmod +x ClipHarbor/ClipHarbor
           tar -czf dist/ClipHarbor-${{ matrix.name }}.tar.gz ClipHarbor
 
+      # One-file AppImage with its icon and menu entry. appimagetool and the type2 runtime come from the
+      # AppImage project; the static runtime doesn't need libfuse2, which newer Ubuntu leaves out.
+      - name: Package for Linux (AppImage)
+        if: runner.os == 'Linux'
+        continue-on-error: true   # a problem here never holds up the .tar.gz or the release
+        run: |
+          case "${{ matrix.rid }}" in linux-arm64) arch=aarch64 ;; *) arch=x86_64 ;; esac
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          curl -fsSL -o runtime https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-$arch
+          chmod +x appimagetool
+          D=ClipHarbor.AppDir
+          mkdir -p $D/usr/bin $D/usr/share/applications $D/usr/share/icons/hicolor/256x256/apps
+          cp publish/ClipHarbor $D/usr/bin/ && chmod +x $D/usr/bin/ClipHarbor
+          printf '#!/bin/sh\nexec "$(dirname "$(readlink -f "$0")")/usr/bin/ClipHarbor" "$@"\n' > $D/AppRun && chmod +x $D/AppRun
+          printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=ClipHarbor' 'Comment=Video and audio downloader' \
+            'Exec=ClipHarbor %u' 'Icon=io.github.clipharbor' 'Terminal=false' 'Categories=AudioVideo;Network;' \
+            'MimeType=x-scheme-handler/clipharbor;' > $D/io.github.clipharbor.desktop
+          cp $D/io.github.clipharbor.desktop $D/usr/share/applications/
+          convert assets/ClipHarbor.png -resize 256x256 $D/io.github.clipharbor.png 2>/dev/null || cp assets/ClipHarbor.png $D/io.github.clipharbor.png
+          cp $D/io.github.clipharbor.png $D/usr/share/icons/hicolor/256x256/apps/
+          ln -sf io.github.clipharbor.png $D/.DirIcon
+          ARCH=$arch APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool --runtime-file runtime --no-appstream $D dist/ClipHarbor-${{ matrix.name }}.AppImage
+          chmod +x dist/ClipHarbor-${{ matrix.name }}.AppImage
+          ls -la dist
+
       - name: Package for macOS (.app)
         if: runner.os == 'macOS'
         run: |
@@ -131,6 +156,9 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libice6 libsm6 libfontconfig1 >/dev/null
           timeout 60 xvfb-run -a ./publish/ClipHarbor --screenshot shot.png
           test -s shot.png
+          # The AppImage too (unpacked to run, since the runner may not have FUSE).
+          APPIMAGE_EXTRACT_AND_RUN=1 timeout 90 xvfb-run -a ./dist/ClipHarbor-linux-x64.AppImage --screenshot shot-appimage.png
+          test -s shot-appimage.png
 
       - name: Screenshot check (macOS)
         continue-on-error: true
@@ -143,7 +171,7 @@ jobs:
         if: always()
         with:
           name: screenshot-${{ matrix.name }}
-          path: shot.png
+          path: shot*.png
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v6

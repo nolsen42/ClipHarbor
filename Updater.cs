@@ -27,7 +27,7 @@ public static class Updater
     static string AssetName =>
         Platform.IsWindows ? "ClipHarbor-windows-x64.exe"
         : Platform.IsMac ? (Platform.IsArm ? "ClipHarbor-macos-apple-silicon.zip" : "ClipHarbor-macos-intel.zip")
-        : (Platform.IsArm ? "ClipHarbor-linux-arm64.tar.gz" : "ClipHarbor-linux-x64.tar.gz");
+        : "ClipHarbor-linux-" + (Platform.IsArm ? "arm64" : "x64") + (Platform.AppImage != null ? ".AppImage" : ".tar.gz");
 
     /// <summary>Asks GitHub for the latest release. Returns it if it's newer than this copy, otherwise null.</summary>
     public static async Task<UpdateInfo?> CheckAsync(CancellationToken ct)
@@ -114,6 +114,13 @@ public static class Updater
                 var app = Directory.EnumerateDirectories(work, "*.app").FirstOrDefault() ?? throw new InvalidOperationException("The update didn't contain the app.");
                 Swap(target, () => Directory.Move(app, target));
                 return Path.Combine(target, "Contents", "MacOS", Path.GetFileName(exePath));
+            }
+            if (file.EndsWith(".AppImage", StringComparison.Ordinal))
+            {
+                // The new AppImage simply takes the old one's place (it keeps the name the person gave it).
+                Platform.MakeExecutable(file);
+                Swap(target, () => File.Move(file, target));
+                return target;
             }
             await RunAsync("tar", ct, "-xzf", file, "-C", work);
             var bin = Directory.EnumerateFiles(work, "ClipHarbor", SearchOption.AllDirectories).FirstOrDefault() ?? throw new InvalidOperationException("The update didn't contain the app.");
@@ -209,6 +216,6 @@ public static class Updater
     {
         JustUpdated = true;
         try { using var old = Process.GetProcessById(oldPid); old.WaitForExit(20000); } catch { }
-        if (Environment.ProcessPath is { } p) DeleteOld(InstallTarget(p));
+        if (Platform.AppPath is { } p) DeleteOld(InstallTarget(p));
     }
 }

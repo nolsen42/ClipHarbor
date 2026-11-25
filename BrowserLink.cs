@@ -31,7 +31,7 @@ public static class BrowserLink
         catch { return false; }
     }
 
-    static string Exe => Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, Platform.Exe("ClipHarbor"));
+    static string Exe => Platform.AppPath ??Path.Combine(AppContext.BaseDirectory, Platform.Exe("ClipHarbor"));
 
     /// <summary>
     /// Tells the system that clipharbor:// links open this copy of the app. Runs at every start so it

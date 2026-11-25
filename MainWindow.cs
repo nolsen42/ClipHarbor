@@ -165,7 +165,7 @@ public class MainWindow : Window
     /// is hidden in the tray with nothing to do, otherwise when the person chooses or next starts it.</summary>
     async Task InstallQuietlyAsync(UpdateInfo u)
     {
-        var exe = Environment.ProcessPath ?? "";
+        var exe = Platform.AppPath ?? "";
         if (exe.Length == 0 || !Updater.CanInstall(u, exe)) { if (!_banner.IsVisible) ShowUpdateBanner(); return; }
         _updating = true; // also stops further checks: the update is on disk from here on
         try { _readyProgram = await Updater.InstallAsync(u, exe, new Progress<(string, double)>(_ => { }), CancellationToken.None); }
@@ -203,7 +203,7 @@ public class MainWindow : Window
     {
         if (_readyProgram != null) { RestartIntoUpdate(hidden: false); return; }
         if (_update is not { } u || _updating) return;
-        var exe = Environment.ProcessPath ?? "";
+        var exe = Platform.AppPath ?? "";
         var notes = u.Notes.Trim();
         if (notes.Length > 800) notes = notes[..800].TrimEnd() + "…";
         bool canInstall = exe.Length > 0 && Updater.CanInstall(u, exe);
