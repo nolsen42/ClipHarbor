@@ -102,7 +102,7 @@ public class OptionsDialog : Dialog
 
         // Size limit: the finished video is re-encoded to fit (e.g. Discord's 20 MB).
         _size.ItemsSource = DownloadOptions.SizeLimits.Select(s => s.label).ToList();
-        _size.Width = 250;
+        _size.Width = 300;
         _size.SelectedIndex = Math.Max(0, Array.FindIndex(DownloadOptions.SizeLimits, s => s.mb == Result.TargetSizeMB));
         ToolTip.SetTip(_size, "The video is made smaller after it downloads so it fits, for example to send on Discord.\nShort videos stay sharp; long ones get a smaller picture.");
         _sizeRow = Row("Size limit", _size);
