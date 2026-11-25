@@ -26,9 +26,12 @@ public sealed class YtDlpRunner : IYtDlpRunner
         if (File.Exists(ff))
         {
             FfmpegPath = ff;
-            // ffmpeg's own libraries, unpacked by FFmpeg.Init.
-            var lib = Path.Combine(_context.NoBackupFilesDir!.AbsolutePath, "youtubedl-android", "packages", "ffmpeg", "usr", "lib");
-            FfmpegEnvironment = new Dictionary<string, string> { ["LD_LIBRARY_PATH"] = lib };
+            // ffmpeg's own libraries and some of Python's (both unpacked by Init) have to be findable.
+            var packages = Path.Combine(_context.NoBackupFilesDir!.AbsolutePath, "youtubedl-android", "packages");
+            FfmpegEnvironment = new Dictionary<string, string>
+            {
+                ["LD_LIBRARY_PATH"] = Path.Combine(packages, "ffmpeg", "usr", "lib") + ":" + Path.Combine(packages, "python", "usr", "lib"),
+            };
         }
     }
 

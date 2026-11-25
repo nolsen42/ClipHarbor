@@ -59,6 +59,22 @@ public static class AndroidSetup
         catch { }
     }
 
+    /// <summary>Android's share sheet for a downloaded file (Discord, messages, Drive...).</summary>
+    public static void Share(string path)
+    {
+        try
+        {
+            var uri = FileProvider.GetUriForFile(App, "io.github.clipharbor.files", new Java.IO.File(path));
+            var ext = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
+            var send = new Intent(Intent.ActionSend);
+            send.SetType(MimeTypeMap.Singleton?.GetMimeTypeFromExtension(ext) ?? "*/*");
+            send.PutExtra(Intent.ExtraStream, uri);
+            send.AddFlags(ActivityFlags.GrantReadUriPermission);
+            App.StartActivity(Intent.CreateChooser(send, "Share")!.AddFlags(ActivityFlags.NewTask));
+        }
+        catch { }
+    }
+
     static void Notify(string title, string body)
     {
         try

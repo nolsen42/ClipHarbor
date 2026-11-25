@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace ClipHarbor;
 
@@ -61,6 +62,15 @@ public class PhoneView : Grid
         _list.EmptyHint = "In YouTube, X, Reddit or another app, press Share and pick ClipHarbor. Or paste a link above.";
         _list.ActionClicked += OnAction;
         _list.Opened += it => { if (it.Status == ItemStatus.Done && File.Exists(it.FilePath)) Platform.Open(it.FilePath); };
+        // Long-press (or a right-click) on a finished download.
+        _list.MenuRequested += () => { if (_list.Selected.FirstOrDefault() is { } it) ShowItemMenu(it); };
+        // A touch long-press is a "holding" gesture, not a context-menu request.
+        _list.List.AddHandler(InputElement.HoldingEvent, (_, e) =>
+        {
+            if (e.HoldingState != HoldingState.Started) return;
+            if ((e.Source as Visual)?.FindAncestorOfType<ListBoxItem>(true)?.DataContext is DownloadItem it) ShowItemMenu(it);
+        }, handledEventsToo: true);
+        _sheet.PointerPressed += (_, e) => { if (e.Source == _sheet) _sheet.IsVisible = false; };
 
         var top = new StackPanel { Children = { title, input, _banner } };
         var dock = new DockPanel();
@@ -84,9 +94,19 @@ public class PhoneView : Grid
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (TopLevel.GetTopLevel(this)?.InsetsManager is not { } insets) return;
-        void Apply() { _dock.Margin = insets.SafeAreaPadding; _sheet.Padding = insets.SafeAreaPadding; }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.InsetsManager is not { } insets) return;
+        var keyboard = top.InputPane;
+        void Apply()
+        {
+            var safe = insets.SafeAreaPadding;
+            _dock.Margin = safe;
+            // The on-screen keyboard covers the bottom of the screen; lift the sheet above it.
+            double kb = keyboard?.State == Avalonia.Controls.Platform.InputPaneState.Open ? keyboard.OccludedRect.Height : 0;
+            _sheet.Padding = new Thickness(safe.Left, safe.Top, safe.Right, Math.Max(safe.Bottom, kb));
+        }
         insets.SafeAreaChanged += (_, _) => Apply();
+        if (keyboard != null) keyboard.StateChanged += (_, _) => Apply();
         Apply();
     }
 
@@ -141,9 +161,9 @@ public class PhoneView : Grid
     void ShowChoices(LinkInfo info)
     {
         var o = _state.Settings.LastOptions.Clone();
-        if (o.Kind == MediaKind.Animation) o.Kind = MediaKind.Video; // GIFs come later on phones
         var video = new RadioButton { Content = "Video", GroupName = "kind", IsChecked = o.Kind == MediaKind.Video };
-        var audio = new RadioButton { Content = "Audio only", GroupName = "kind", IsChecked = o.Kind == MediaKind.Audio };
+        var audio = new RadioButton { Content = "Audio", GroupName = "kind", IsChecked = o.Kind == MediaKind.Audio };
+        var gif = new RadioButton { Content = "GIF", GroupName = "kind", IsChecked = o.Kind == MediaKind.Animation, IsVisible = !info.IsPlaylist };
         var quality = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
         var heights = new List<int> { 0 };
         var labels = new List<string> { "Best available" };
@@ -162,9 +182,32 @@ public class PhoneView : Grid
         int shownFirst = quality.SelectedIndex;
         var audioFormat = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, ItemsSource = new[] { "MP3", "M4A", "OPUS" } };
         audioFormat.SelectedIndex = Math.Max(0, Array.IndexOf(new[] { "mp3", "m4a", "opus" }, o.Format));
-        void KindChanged() { quality.IsVisible = video.IsChecked == true; audioFormat.IsVisible = audio.IsChecked == true; }
+        // GIF / animated WebP
+        (string label, int width)[] gifSizes = { ("Small · 320 px", 320), ("Medium · 480 px", 480), ("Large · 720 px", 720) };
+        var gifSize = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, ItemsSource = gifSizes.Select(s => s.label).ToList() };
+        gifSize.SelectedIndex = Math.Max(0, Array.FindIndex(gifSizes, s => s.width == o.AnimationWidth) is var gi && gi >= 0 ? gi : 1);
+        var webp = new CheckBox { Content = "Animated WebP instead (smaller)", IsChecked = o.Kind == MediaKind.Animation && o.Format == "webp" };
+        // Size limit: re-encode the finished video to fit, e.g. for Discord.
+        var limit = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch, ItemsSource = DownloadOptions.SizeLimits.Select(s => s.mb == 0 ? "No size limit" : "Fit in " + s.label).ToList() };
+        limit.SelectedIndex = Math.Max(0, Array.FindIndex(DownloadOptions.SizeLimits, s => s.mb == o.TargetSizeMB));
+        // Part of the video
+        bool canClip = !info.IsPlaylist && !info.IsDirectFile && info.Duration > 0;
+        var clip = new CheckBox { Content = "Only part:", VerticalAlignment = VerticalAlignment.Center };
+        var from = new TextBox { Text = "0:00", Width = 86, VerticalContentAlignment = VerticalAlignment.Center };
+        var to = new TextBox { Text = Fmt.Time(info.Duration), Width = 86, VerticalContentAlignment = VerticalAlignment.Center };
+        from.TextChanged += (_, _) => { if (from.IsFocused) clip.IsChecked = true; };
+        to.TextChanged += (_, _) => { if (to.IsFocused) clip.IsChecked = true; };
+        var clipRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, IsVisible = canClip, Children = { clip, from, Ui.Text("to", "sub"), to } };
+
+        void KindChanged()
+        {
+            quality.IsVisible = limit.IsVisible = video.IsChecked == true;
+            audioFormat.IsVisible = audio.IsChecked == true;
+            gifSize.IsVisible = webp.IsVisible = gif.IsChecked == true;
+        }
         video.IsCheckedChanged += (_, _) => KindChanged();
         audio.IsCheckedChanged += (_, _) => KindChanged();
+        gif.IsCheckedChanged += (_, _) => KindChanged();
         KindChanged();
 
         var thumb = new Thumbs.View(120, 68);
@@ -193,27 +236,36 @@ public class PhoneView : Grid
         var card = new Border
         {
             Classes = { "card", "sheet" }, CornerRadius = new CornerRadius(16, 16, 0, 0), Padding = new Thickness(18, 18, 18, 22), VerticalAlignment = VerticalAlignment.Bottom,
-            Child = new StackPanel { Spacing = 14, Children =
+            Child = new ScrollViewer { MaxHeight = 640, Content = new StackPanel { Spacing = 14, Children =
             {
                 head,
-                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 20, Children = { video, audio } },
-                quality, audioFormat,
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 20, Children = { video, audio, gif } },
+                quality, audioFormat, gifSize, webp, limit, clipRow,
                 Ui.Text("Saved in Download/ClipHarbor", "sub", "small"),
                 buttons,
-            } },
+            } } },
         };
         card.Bind(Border.BackgroundProperty, card.GetResourceObservable("Surface"));
         _sheet.Background = new SolidColorBrush(Color.FromArgb(110, 0, 0, 0));
         _sheet.Child = card;
         _sheet.IsVisible = true;
-        _sheet.PointerPressed += (_, e) => { if (e.Source == _sheet) _sheet.IsVisible = false; };
         cancel.Click += (_, _) => _sheet.IsVisible = false;
         ok.Click += (_, _) =>
         {
-            o.Kind = audio.IsChecked == true ? MediaKind.Audio : MediaKind.Video;
-            if (o.Kind == MediaKind.Video) o.Format = "mp4";
-            else o.Format = new[] { "mp3", "m4a", "opus" }[Math.Max(0, audioFormat.SelectedIndex)];
-            o.TargetSizeMB = 0;
+            // Part of the video: checked first, so a typo doesn't close the sheet.
+            double cs = -1, ce = -1;
+            if (canClip && clip.IsChecked == true)
+            {
+                double s = Engine.ParseTime(from.Text), e = Engine.ParseTime(to.Text);
+                if (s < 0 || e < 0) { Banner("Type the times like 90, 1:30 or 1:02:03.", true); return; }
+                e = Math.Min(e, info.Duration);
+                if (e - s < 0.5) { Banner("The end of the part has to come after the start.", true); return; }
+                if (s > 0.5 || e < info.Duration - 0.5) { cs = s; ce = e; }
+            }
+            o.Kind = audio.IsChecked == true ? MediaKind.Audio : gif.IsChecked == true ? MediaKind.Animation : MediaKind.Video;
+            if (o.Kind == MediaKind.Video) { o.Format = "mp4"; o.TargetSizeMB = DownloadOptions.SizeLimits[Math.Max(0, limit.SelectedIndex)].mb; }
+            else if (o.Kind == MediaKind.Audio) o.Format = new[] { "mp3", "m4a", "opus" }[Math.Max(0, audioFormat.SelectedIndex)];
+            else { o.Format = webp.IsChecked == true ? "webp" : "gif"; o.AnimationWidth = gifSizes[Math.Max(0, gifSize.SelectedIndex)].width; }
             o.Folder = AppState.DefaultFolder();
             var download = o.Clone();
             if (o.Kind == MediaKind.Video)
@@ -224,13 +276,14 @@ public class PhoneView : Grid
                 if (quality.SelectedIndex != shownFirst) o.MaxHeight = download.MaxHeight;
             }
             _state.Settings.LastOptions = o.Clone();
-            Queue(info, download);
+            Queue(info, download, cs, ce);
             _sheet.IsVisible = false;
         };
     }
 
-    void Queue(LinkInfo info, DownloadOptions o)
+    void Queue(LinkInfo info, DownloadOptions o, double clipStart = -1, double clipEnd = -1)
     {
+        bool part = clipStart >= 0 && clipEnd > clipStart;
         if (info.IsPlaylist)
         {
             var t = DateTime.Now; int k = 0;
@@ -244,9 +297,66 @@ public class PhoneView : Grid
         else
             _state.Items.Add(new DownloadItem
             {
-                Url = info.Url, Title = info.Title, Uploader = info.Uploader, ThumbnailUrl = info.Thumbnail, DurationSeconds = info.Duration,
+                Url = info.Url, Title = info.Title, Uploader = info.Uploader, ThumbnailUrl = info.Thumbnail,
+                DurationSeconds = part ? clipEnd - clipStart : info.Duration, ClipStart = part ? clipStart : -1, ClipEnd = part ? clipEnd : -1,
+                // A part gets its own name, so it never replaces (or is skipped as) the whole video.
+                FileName = part ? Engine.SafeName($"{info.Title} ({Engine.TimeForName(clipStart)}-{Engine.TimeForName(clipEnd)})") : "",
                 Options = o.Clone(), Direct = info.IsDirectFile, TotalBytes = info.DirectSize,
             });
+        Changed();
+    }
+
+    // ---------------- long-press menu for a finished download ----------------
+
+    /// <summary>Share, make a GIF, make it smaller for Discord, or delete it.</summary>
+    void ShowItemMenu(DownloadItem it)
+    {
+        if (it.Status != ItemStatus.Done || !File.Exists(it.FilePath)) return;
+        bool isVideo = new[] { ".mp4", ".mkv", ".webm", ".mov", ".m4v" }.Contains(Path.GetExtension(it.FilePath).ToLowerInvariant());
+        var panel = new StackPanel { Spacing = 6 };
+        panel.Children.Add(new TextBlock { Text = it.Title, Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) });
+        void Add(string text, Geometry icon, Action act)
+        {
+            var b = Ui.Button(text, icon);
+            b.HorizontalAlignment = HorizontalAlignment.Stretch; b.HorizontalContentAlignment = HorizontalAlignment.Left; b.MinHeight = 48;
+            b.Click += (_, _) => { _sheet.IsVisible = false; act(); };
+            panel.Children.Add(b);
+        }
+        Add("Share", Icons.Link, () => AndroidSetup.Share(it.FilePath));
+        if (isVideo)
+        {
+            Add("Make a GIF", Icons.Image, () => AddConversion(it, new DownloadOptions { Kind = MediaKind.Animation, Format = "gif", AnimationWidth = 480 }, it.Title));
+            Add("Make smaller for Discord (20 MB)", Icons.Video, () =>
+            {
+                if (new FileInfo(it.FilePath).Length <= 20_000_000) { Banner("This video is already under 20 MB, so it fits on Discord as it is.", false); return; }
+                AddConversion(it, new DownloadOptions { Kind = MediaKind.Video, Format = "mp4", TargetSizeMB = 20 }, $"{it.Title} (20 MB)");
+            });
+        }
+        Add("Delete the file", Icons.Trash, () =>
+        {
+            try { File.Delete(it.FilePath); } catch { }
+            _state.Items.Remove(it);
+            Changed();
+        });
+        var card = new Border
+        {
+            CornerRadius = new CornerRadius(16, 16, 0, 0), Padding = new Thickness(14, 18, 14, 22), VerticalAlignment = VerticalAlignment.Bottom, Child = panel,
+        };
+        card.Bind(Border.BackgroundProperty, card.GetResourceObservable("Surface"));
+        _sheet.Background = new SolidColorBrush(Color.FromArgb(110, 0, 0, 0));
+        _sheet.Child = card;
+        _sheet.IsVisible = true;
+    }
+
+    /// <summary>A new list entry that converts a finished download (GIF, or a smaller copy).</summary>
+    void AddConversion(DownloadItem src, DownloadOptions o, string title)
+    {
+        o.Folder = Path.GetDirectoryName(src.FilePath) ?? AppState.DefaultFolder();
+        _state.Items.Add(new DownloadItem
+        {
+            Url = src.Url, Title = title, Uploader = src.Uploader, ThumbnailUrl = src.ThumbnailUrl, DurationSeconds = src.DurationSeconds,
+            SourceFile = src.FilePath, Options = o,
+        });
         Changed();
     }
 

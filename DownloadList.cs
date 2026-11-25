@@ -128,7 +128,7 @@ public class RowView : Border
         if (Compact)
         {
             _thumb = new Thumbs.View(88, 50);
-            _bar.Width = 90;
+            _bar.Width = 90; _bar.MinWidth = 0; // (the theme's 200 minimum would push the status text away)
             _folder.IsVisible = false;
         }
 
