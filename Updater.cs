@@ -205,6 +205,28 @@ public static class Updater
         Process.Start(start)?.Dispose();
     }
 
+    /// <summary>The Windows installer's entry in Settings → Apps (Inno Setup names it after the AppId).</summary>
+    const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{7309A087-F682-411A-8085-7FF30344039B}_is1";
+
+    /// <summary>An installed copy updates itself by replacing its .exe like the portable one does, so the
+    /// version shown in Settings → Apps would stay old. Fix that at start when this is the installed copy.</summary>
+    public static void RefreshInstalledVersion()
+    {
+        if (!OperatingSystem.IsWindows() || Environment.ProcessPath is not { } exe) return;
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(UninstallKey, writable: true);
+            if (key?.GetValue("InstallLocation") is not string dir) return;
+            if (!string.Equals(Path.GetFullPath(dir).TrimEnd('\\'), Path.GetDirectoryName(exe)?.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) return;
+            if (key.GetValue("DisplayVersion") as string != CurrentText)
+            {
+                key.SetValue("DisplayVersion", CurrentText);
+                key.SetValue("DisplayName", "ClipHarbor");
+            }
+        }
+        catch { }
+    }
+
     /// <summary>This copy was just started by an update.</summary>
     public static bool JustUpdated { get; private set; }
 

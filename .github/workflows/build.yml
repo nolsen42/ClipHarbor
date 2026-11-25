@@ -94,6 +94,21 @@ jobs:
           New-Item -ItemType Directory dist | Out-Null
           Copy-Item publish/ClipHarbor.exe dist/
 
+      # Installer (Start menu, Settings → Apps entry), per user, next to the portable .exe.
+      - name: Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            choco install innosetup -y --no-progress | Out-Null
+            $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          $v = "$env:VERSION" -replace '-.*$', ''   # Windows version numbers are digits and dots only
+          & $iscc /Qp "/DAppVersion=$v" "/DSourceExe=$PWD\publish\ClipHarbor.exe" "/DOutDir=$PWD\dist" packaging\windows\ClipHarbor.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+          Get-ChildItem dist
+
       - name: Package for Linux
         if: runner.os == 'Linux'
         run: |

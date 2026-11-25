@@ -37,6 +37,7 @@ public partial class App : Application
                 SingleInstance.Listen(lines => Dispatcher.UIThread.Post(() => OnHandOff(lines)));
                 if (state.Settings.StartAtLogin) StartAtLogin.Set(true); // keeps the entry right if the app was moved
                 _ = Task.Run(BrowserLink.Register); // clipharbor:// links from the browser open this app
+                _ = Task.Run(Updater.RefreshInstalledVersion); // installed copy: keep Settings → Apps showing this version
                 // macOS: clicking the Dock icon while the window is hidden brings it back,
                 // and clipharbor:// links arrive here instead of on the command line.
                 if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime act)

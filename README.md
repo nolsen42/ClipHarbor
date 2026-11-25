@@ -28,7 +28,8 @@ Get the latest version from the **[Releases page](../../releases/latest)** and d
 
 | System | File | How to start it |
 | --- | --- | --- |
-| Windows (64-bit) | `ClipHarbor-windows-x64.exe` | Run it. No installation needed. |
+| Windows (64-bit) | `ClipHarbor-windows-x64-setup.exe` | Run it to install ClipHarbor for your account (no admin needed). It adds ClipHarbor to the Start menu and to Settings → Apps for uninstalling. |
+| Windows, portable | `ClipHarbor-windows-x64.exe` | Run it from anywhere. Nothing is installed. |
 | Mac with Apple chip (M1 and later) | `ClipHarbor-macos-apple-silicon.zip` | Unzip and move **ClipHarbor** to Applications. |
 | Mac with Intel chip | `ClipHarbor-macos-intel.zip` | Same as above. |
 | Linux (most PCs) | `ClipHarbor-linux-x64.AppImage` | Allow it to run (right-click → Properties → "Allow executing as program", or `chmod +x ClipHarbor-linux-x64.AppImage`) and double-click it. |
