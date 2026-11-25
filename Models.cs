@@ -45,7 +45,7 @@ public class DownloadOptions
 
     /// <summary>The size limits offered: label and MB.</summary>
     public static readonly (string label, int mb)[] SizeLimits =
-        { ("No limit", 0), ("10 MB", 10), ("20 MB · Discord", 20),("50 MB · Discord Nitro Basic", 50), ("100 MB", 100) };
+        { ("No limit", 0),("20 MB · Discord", 20),("50 MB · Discord Nitro Basic", 50), ("100 MB", 100) };
 
     public static string QualityLabel(int h) => h switch
     {
