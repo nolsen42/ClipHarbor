@@ -14,10 +14,10 @@
     <Version>1.0.0</Version>
     <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
-    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <!-- 64-bit ARM: practically every phone from the last several years. (x64 would only add emulators.) -->
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
     <!-- youtubedl-android's Python and ffmpeg are .so files that Android has to unpack so they can run. -->
     <AndroidStoreUncompressedFileExtensions>.so</AndroidStoreUncompressedFileExtensions>
-    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <AndroidSdkDirectory Condition="'$(AndroidSdkDirectory)' == '' and Exists('$(LOCALAPPDATA)\Android\Sdk')">$(LOCALAPPDATA)\Android\Sdk</AndroidSdkDirectory>
     <JavaSdkDirectory Condition="'$(JavaSdkDirectory)' == '' and Exists('$(LOCALAPPDATA)\Android\openjdk')">$(LOCALAPPDATA)\Android\openjdk</JavaSdkDirectory>
     <UpdateRepo Condition="'$(UpdateRepo)' == ''">nolsen42/ClipHarbor</UpdateRepo>
@@ -52,6 +52,11 @@
     <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.7.1.4" />
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.19.1" />
     <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.4.21" />
+    <!-- Newer drawing libraries than Avalonia 11.3 asks for: these are built for phones with 16 KB memory pages. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.4" />
+    <PackageReference Include="HarfBuzzSharp" Version="8.3.1.5" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" Version="8.3.1.5" />
   </ItemGroup>
 
   <!-- yt-dlp with Python, and ffmpeg, for Android: youtubedl-android (the library Seal uses). -->
