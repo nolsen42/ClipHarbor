@@ -28,6 +28,9 @@ public partial class App : Application
             // The window decides itself when the app ends (Quit), so hiding it to the tray keeps the app running.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             _window = new MainWindow(state, shot, Program.Links, () => desktop.Shutdown());
+            // Sign-out or shutdown (Windows, macOS, and X11 session managers such as KDE's): let it happen.
+            // (Quitting from the app calls Shutdown() directly, which doesn't raise this.)
+            desktop.ShutdownRequested += (_, _) => _window.EndForSessionEnd();
             if (shot == null)
             {
                 MakeTray();

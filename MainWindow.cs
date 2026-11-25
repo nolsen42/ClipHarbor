@@ -250,6 +250,17 @@ public class MainWindow : Window
 
     static string TrayName => Platform.IsMac ? "menu bar" : "system tray";
 
+    /// <summary>The computer is signing out or shutting down: stop without asking anything. Running downloads
+    /// go back in the queue, so they carry on when ClipHarbor next starts.</summary>
+    public void EndForSessionEnd()
+    {
+        if (_quitting) return;
+        _quitting = true;
+        foreach (var c in _running.Values) c.Cancel();
+        foreach (var it in _state.Items.Where(i => i.Status == ItemStatus.Downloading)) it.Status = ItemStatus.Queued;
+        if (_shot == null) try { _state.Save(); } catch { }
+    }
+
     /// <summary>Really ends the app: pauses running downloads (they resume next time) and saves.</summary>
     public async Task QuitAsync()
     {
@@ -850,6 +861,8 @@ public class MainWindow : Window
     async void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (_quitting || _shot != null) return;
+        // Signing out or shutting down: never hold it up (that cancels the logout). Save and go.
+        if (e.CloseReason is WindowCloseReason.OSShutdown or WindowCloseReason.ApplicationShutdown) { EndForSessionEnd(); return; }
         e.Cancel = true;
         var s = _state.Settings;
         if (!s.BackgroundAsked)
