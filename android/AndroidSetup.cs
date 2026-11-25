@@ -29,6 +29,7 @@ public static class AndroidSetup
         {
             var nm = (NotificationManager)App.GetSystemService(Context.NotificationService)!;
             nm.CreateNotificationChannel(new NotificationChannel(Channel, "Finished downloads", NotificationImportance.Default));
+            nm.CreateNotificationChannel(new NotificationChannel(DownloadService.Channel, "Downloads in progress", NotificationImportance.Low));
         }
         if (OperatingSystem.IsAndroidVersionAtLeast(33) && ContextCompat.CheckSelfPermission(activity, "android.permission.POST_NOTIFICATIONS") != Android.Content.PM.Permission.Granted)
             activity.RequestPermissions(new[] { "android.permission.POST_NOTIFICATIONS" }, 1);

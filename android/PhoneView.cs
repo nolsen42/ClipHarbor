@@ -27,6 +27,7 @@ public class PhoneView : Grid
     readonly Dictionary<string, CancellationTokenSource> _running = new();
     CancellationTokenSource? _analyzeCts;
     bool _dirty;
+    string? _busyText;
     DateTime _lastUpdate = DateTime.MinValue;
 
     PhoneView()
@@ -393,6 +394,11 @@ public class PhoneView : Grid
             Start(it);
         }
         if (_running.Count > 0) RowView.RefreshAll();
+        // While anything runs, a foreground service keeps the app alive in the background.
+        var busy = _running.Count == 0 ? null
+            : _running.Count == 1 ? "Downloading " + (_state.Items.FirstOrDefault(i => i.Status == ItemStatus.Downloading)?.Title ?? "")
+            : $"Downloading {_running.Count} items";
+        if (busy != _busyText) { _busyText = busy; DownloadService.Update(AndroidSetup.App, busy); }
         if (_dirty)
         {
             _dirty = false;
