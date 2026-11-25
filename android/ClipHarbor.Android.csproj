@@ -16,6 +16,8 @@
     <ApplicationVersion>1</ApplicationVersion>
     <!-- 64-bit ARM: practically every phone from the last several years. (x64 would only add emulators.) -->
     <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+    <!-- An installable .apk (not the Play Store's .aab bundle): it's handed out on GitHub. -->
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
     <!-- youtubedl-android's Python and ffmpeg are .so files that Android has to unpack so they can run. -->
     <AndroidStoreUncompressedFileExtensions>.so</AndroidStoreUncompressedFileExtensions>
     <AndroidSdkDirectory Condition="'$(AndroidSdkDirectory)' == '' and Exists('$(LOCALAPPDATA)\Android\Sdk')">$(LOCALAPPDATA)\Android\Sdk</AndroidSdkDirectory>

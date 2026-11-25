@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main, avalonia-port]
+    branches: [main, avalonia-port, android]
   pull_request:
   release:
     types: [published]
@@ -203,6 +203,62 @@ jobs:
           name: ClipHarbor-${{ matrix.name }}
           path: dist/
 
+  # ClipHarbor for Android (android/ClipHarbor.Android.csproj): one APK for 64-bit ARM phones.
+  # Releases need the same signing key every time, or phones won't install updates over the old version:
+  # secrets ANDROID_KEYSTORE (the .keystore file, base64), ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS.
+  # Without them the APK is signed with a throwaway test key and isn't attached to releases.
+  android:
+    needs: plan
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: '21'
+
+      - name: Install .NET for Android
+        run: dotnet workload install android --skip-manifest-update
+
+      - name: Build the APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RELEASE: ${{ needs.plan.outputs.release }}
+        run: |
+          v="${VERSION%%-*}"
+          IFS=. read -r a b c <<< "$v"
+          code=$(( ${a:-0} * 10000 + ${b:-0} * 100 + ${c:-0} ))   # 1.4.0 -> 10400: always higher for a newer release
+          sign=()
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            sign=(-p:AndroidKeyStore=true "-p:AndroidSigningKeyStore=$RUNNER_TEMP/release.keystore" "-p:AndroidSigningKeyAlias=$KEY_ALIAS"
+                  "-p:AndroidSigningStorePass=env:KEYSTORE_PASSWORD" "-p:AndroidSigningKeyPass=env:KEYSTORE_PASSWORD")
+          else
+            echo "::warning::No Android signing key in the repository secrets; this APK uses a test key and isn't attached to releases."
+          fi
+          dotnet publish android/ClipHarbor.Android.csproj -c Release -o publish-android --nologo \
+            "-p:Version=$v" "-p:ApplicationVersion=$code" "-p:UpdateRepo=$GITHUB_REPOSITORY" "-p:AndroidSdkDirectory=$ANDROID_HOME" "${sign[@]}"
+          mkdir -p dist-android
+          apk=$(ls publish-android/*-Signed.apk | head -n 1)
+          if [ -n "$KEYSTORE_B64" ] || [ "$RELEASE" != "true" ]; then cp "$apk" dist-android/ClipHarbor-android.apk; fi
+          ls -la publish-android dist-android
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ClipHarbor-android
+          path: dist-android/
+          if-no-files-found: ignore
+
   # The "Send to ClipHarbor" browser extension, one zip per browser family, with the release's version number.
   # Chrome uses background.service_worker, Firefox background.scripts; each zip keeps only its own.
   # The copy for the Chrome Web Store is switched off on YouTube (skip-sites.json), which that store doesn't allow.
@@ -279,8 +335,9 @@ jobs:
 
   # Releases: attach every build. For the Run workflow button, also create the tag and the release.
   release:
-    if: needs.plan.outputs.release == 'true'
-    needs: [plan, build, browser-extension]
+    # A failed Android build doesn't hold up the desktop release (it just has no APK).
+    if: always() && needs.plan.outputs.release == 'true' && needs.build.result == 'success' && needs.browser-extension.result == 'success'
+    needs: [plan, build, browser-extension, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
