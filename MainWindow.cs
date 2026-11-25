@@ -517,6 +517,7 @@ public class MainWindow : Window
         DownloadOptions opts;
         List<PlaylistEntry> entries;
         string fileName = "";
+        double clipStart = -1, clipEnd = -1;
         if (preset != null && quiet)
         {
             opts = preset.Clone();
@@ -529,13 +530,18 @@ public class MainWindow : Window
             opts = d.Result.Clone();
             entries = d.ChosenEntries;
             fileName = d.FileName;
+            clipStart = d.ClipStart; clipEnd = d.ClipEnd;
             _state.Settings.LastOptions = opts.Clone();
         }
-        Queue(info, opts, entries, fileName: fileName);
+        Queue(info, opts, entries, fileName: fileName, clipStart: clipStart, clipEnd: clipEnd);
     }
 
-    public void Queue(LinkInfo info, DownloadOptions opts, List<PlaylistEntry> entries, string? playlistName = null, string fileName = "")
+    public void Queue(LinkInfo info, DownloadOptions opts, List<PlaylistEntry> entries, string? playlistName = null, string fileName = "", double clipStart = -1, double clipEnd = -1)
     {
+        // A part of a video gets its own name, so it never replaces (or is skipped as) the whole video.
+        bool clip = clipStart >= 0 && clipEnd > clipStart;
+        if (clip && fileName.Length == 0)
+            fileName = Engine.SafeName($"{(info.Title.Length > 0 ? info.Title : "clip")} ({Engine.TimeForName(clipStart)}-{Engine.TimeForName(clipEnd)})");
         if (info.IsPlaylist)
         {
             var name = playlistName ?? (info.Title.Length > 0 ? info.Title : "Playlist");
@@ -555,7 +561,8 @@ public class MainWindow : Window
         {
             _state.Items.Add(new DownloadItem
             {
-                Url = info.Url, Title = fileName.Length > 0 ? fileName : info.Title, Uploader = info.Uploader, ThumbnailUrl = info.Thumbnail, DurationSeconds = info.Duration,
+                Url = info.Url, Title = fileName.Length > 0 ? fileName : info.Title, Uploader = info.Uploader, ThumbnailUrl = info.Thumbnail,
+                DurationSeconds = clip ? clipEnd - clipStart : info.Duration, ClipStart = clip ? clipStart : -1, ClipEnd = clip ? clipEnd : -1,
                 Options = opts.Clone(), Direct = info.IsDirectFile, TotalBytes = info.DirectSize, UseSignIn = info.NeedsSignIn, FileName = fileName,
             });
         }
@@ -724,6 +731,14 @@ public class MainWindow : Window
             Sep();
             Add("Make a GIF", () => MakeAnimation(one, "gif"));
             Add("Make an animated WebP", () => MakeAnimation(one, "webp"));
+            var smaller = new MenuItem { Header = "Make smaller" };
+            foreach (var (label, mb) in DownloadOptions.SizeLimits.Where(s => s.mb > 0))
+            {
+                var mi = new MenuItem { Header = "Under " + label };
+                mi.Click += (_, _) => MakeSmaller(one, mb);
+                smaller.Items.Add(mi);
+            }
+            m.Items.Add(smaller);
             Sep();
         }
         if (one != null && !one.Direct && one.SourceFile.Length == 0)
@@ -776,6 +791,29 @@ public class MainWindow : Window
             },
         });
         if (_nav.SelectedKey is "done" or "failed" or "subs" or "audio" or "video") Navigate("all");
+        Changed();
+    }
+
+    /// <summary>Adds a list entry that makes a smaller copy of a finished video, e.g. to fit Discord's 10 MB.</summary>
+    async void MakeSmaller(DownloadItem src, int mb)
+    {
+        if (!Engine.HasFfmpeg)
+        {
+            await Dialog.Info(this, "Make smaller", "This needs the free converter (ffmpeg). Open Settings → Download engine and press Install or Add converter first.");
+            return;
+        }
+        if (File.Exists(src.FilePath) && new FileInfo(src.FilePath).Length <= (long)mb * 1_000_000)
+        {
+            await Dialog.Info(this, "Make smaller", $"This video is already under {mb} MB ({Fmt.Bytes(new FileInfo(src.FilePath).Length)}).");
+            return;
+        }
+        _state.Items.Add(new DownloadItem
+        {
+            Url = src.Url, Title = $"{src.Title} ({mb} MB)", Uploader = src.Uploader, ThumbnailUrl = src.ThumbnailUrl, DurationSeconds = src.DurationSeconds,
+            SourceFile = src.FilePath,
+            Options = new DownloadOptions { Kind = MediaKind.Video, Format = "mp4", TargetSizeMB = mb, Folder = Path.GetDirectoryName(src.FilePath) ?? src.Options.Folder },
+        });
+        if (_nav.SelectedKey is "done" or "failed" or "subs" or "audio" or "gifs") Navigate("all");
         Changed();
     }
 

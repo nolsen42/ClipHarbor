@@ -166,6 +166,7 @@ public class RowView : Border
         _title.Text = it.Title.Length > 0 ? it.Title : it.Url;
 
         var bits = new List<string> { it.Direct ? "File" : it.Options.Describe() };
+        if (it.IsClip) bits.Add($"Part {Fmt.Time(it.ClipStart)}–{Fmt.Time(it.ClipEnd)}");
         if (it.TotalBytes > 0) bits.Add(Fmt.Bytes(it.TotalBytes));
         if (it.Options.Subtitles && it.Options.Kind == MediaKind.Video) bits.Add("Subtitles");
         if (it.Uploader.Length > 0) bits.Add(it.Uploader);
@@ -185,6 +186,8 @@ public class RowView : Border
             if (finishing) _status.Text = "Finishing up…";
             else if (it.Phase == "converting")
                 _status.Text = $"Making {it.Options.Format.ToUpperInvariant()}" + (it.Progress > 0 ? $"  ·  {it.Progress * 100:0}%" : "…");
+            else if (it.Phase == "shrinking")
+                _status.Text = $"Fitting to {it.Options.TargetSizeMB} MB" + (it.Progress > 0 ? $"  ·  {it.Progress * 100:0}%" : "…");
             else
             {
                 var parts = new List<string> { it.Progress > 0 ? $"{it.Progress * 100:0}%" : "Starting…" };

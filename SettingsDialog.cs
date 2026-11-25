@@ -29,7 +29,9 @@ public class SettingsDialog : Dialog
     readonly Button _install = Ui.Button("Install engine", null, "accent");
     readonly Button _update = Ui.Button("Update engine");
     readonly CheckBox _autoUpdate = new() { Content = "Check for new versions of ClipHarbor automatically" };
-    readonly CheckBox _autoInstall = new() { Content = "Install them automatically" };
+    static readonly string[] SponsorModes = { "", "mark", "remove" };
+    readonly ComboBox _sponsor = new() { Width = 220, ItemsSource = new[] { "Off", "Mark them as chapters", "Cut them out" } };
+    readonly CheckBox _autoInstall =new() { Content = "Install them automatically" };
     readonly CheckBox _autoEngine =new() { Content = "Keep the download engine up to date automatically" };
     readonly Button _checkApp = Ui.Button("Check now");
     readonly TextBlock _appStatus = new() { Classes = { "sub" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 };
@@ -93,6 +95,9 @@ public class SettingsDialog : Dialog
         _cookies.ItemsSource = BrowserList.Select(b => b.name).ToList();
         _cookies.SelectedIndex = Math.Max(0, Array.IndexOf(Browsers, s.CookiesBrowser ?? ""));
         Row("Use sign-in from browser", _cookies, "for private or age-restricted videos");
+        _sponsor.SelectedIndex = Math.Max(0, Array.IndexOf(SponsorModes, s.SponsorBlock ?? ""));
+        ToolTip.SetTip(_sponsor, "Uses SponsorBlock (sponsor.ajay.app), where viewers mark paid promotions, self-promotion\nand \"like and subscribe\" reminders in YouTube videos. Needs the converter (ffmpeg).\nNot used when downloading only part of a video.");
+        Row("SponsorBlock", _sponsor, "skip sponsors in YouTube videos");
         _thumb.IsChecked = s.EmbedThumbnail; Check(_thumb);
         _meta.IsChecked = s.EmbedMetadata; Check(_meta);
         ToolTip.SetTip(_thumb, "Music players, file managers and phones show it as the file's picture.\nWorks for MP4, MKV, MP3, M4A, FLAC and OPUS.");
@@ -232,6 +237,7 @@ public class SettingsDialog : Dialog
         _s.SpeedLimit = amount <= 0 ? "" : amount.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + (_limitUnit.SelectedIndex == 1 ? "K" : "M");
         _s.Proxy = (_proxy.Text ?? "").Trim();
         _s.CookiesBrowser = Browsers[Math.Max(0, _cookies.SelectedIndex)];
+        _s.SponsorBlock = SponsorModes[Math.Max(0, _sponsor.SelectedIndex)];
         _s.EmbedThumbnail = _thumb.IsChecked == true;
         _s.EmbedMetadata = _meta.IsChecked == true;
         _s.SubscriptionCheckHours = (int)(_subHours.Value ?? 0);

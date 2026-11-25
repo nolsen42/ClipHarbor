@@ -24,6 +24,8 @@ public class DownloadOptions
     public int AnimationWidth { get; set; } = 480;
     /// <summary>GIF/WebP: also keep the downloaded video file.</summary>
     public bool KeepVideo { get; set; }
+    /// <summary>Video: shrink the finished file to fit this many MB (e.g. 20 for Discord), 0 = no limit.</summary>
+    public int TargetSizeMB { get; set; }
 
     public DownloadOptions Clone()
     {
@@ -36,9 +38,14 @@ public class DownloadOptions
     {
         if (Kind == MediaKind.Audio) return $"{Format.ToUpperInvariant()} audio";
         if (Kind == MediaKind.Animation) return $"{Format.ToUpperInvariant()} · {(AnimationWidth > 0 ? AnimationWidth + " px" : "full size")}";
+        if (TargetSizeMB > 0) return $"{Format.ToUpperInvariant()} · under {TargetSizeMB} MB";
         var q = MaxHeight <= 0 ? "Best" : QualityLabel(MaxHeight);
         return $"{Format.ToUpperInvariant()} · {q}";
     }
+
+    /// <summary>The size limits offered: label and MB.</summary>
+    public static readonly (string label, int mb)[] SizeLimits =
+        { ("No limit", 0), ("10 MB", 10), ("20 MB · Discord", 20), ("25 MB · email", 25), ("50 MB · Discord Nitro Basic", 50), ("100 MB", 100) };
 
     public static string QualityLabel(int h) => h switch
     {
@@ -71,6 +78,10 @@ public class DownloadItem
     public bool UseSignIn { get; set; }
     /// <summary>A file name chosen for this download (without its ending); empty uses the usual name.</summary>
     public string FileName { get; set; } = "";
+    /// <summary>Only this part of the video, in seconds; -1 = the whole video.</summary>
+    public double ClipStart { get; set; } = -1;
+    public double ClipEnd { get; set; } = -1;
+    [JsonIgnore] public bool IsClip => ClipStart >= 0 && ClipEnd > ClipStart;
     public DateTime Added { get; set; } = DateTime.Now;
 
     [JsonIgnore] public double Progress { get; set; }
@@ -121,6 +132,8 @@ public class AppSettings
     public bool InstallAppUpdates { get; set; } = true;
     /// <summary>Update ClipHarbor's own copy of yt-dlp at start and once a day; sites change often.</summary>
     public bool UpdateEngineAutomatically { get; set; } = true;
+    /// <summary>SponsorBlock on YouTube: "" off, "mark" as chapters, "remove" cut out.</summary>
+    public string SponsorBlock { get; set; } = "";
 }
 
 public class AppState
@@ -216,4 +229,7 @@ public static class Fmt
         var t = TimeSpan.FromSeconds(Math.Round(s));
         return t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
     }
+
+    /// <summary>A point in a video: like Duration, but 0 shows as 0:00.</summary>
+    public static string Time(double s) => s < 0.5 ? "0:00" : Duration(s);
 }

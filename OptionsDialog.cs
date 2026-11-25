@@ -41,6 +41,14 @@ public class OptionsDialog : Dialog
     readonly List<int> _qualityValues = new();
     bool _useLangList, _noSubs;
 
+    /// <summary>The part of the video picked, in seconds; -1 = the whole video.</summary>
+    public double ClipStart = -1, ClipEnd = -1;
+    readonly CheckBox _clip = new() { Content = "Only part of it, from", VerticalAlignment = VerticalAlignment.Center };
+    readonly TextBox _clipFrom = new() { Width = 86, Watermark = "0:00" };
+    readonly TextBox _clipTo = new() { Width = 86 };
+    readonly ComboBox _size = new() { Width = 220 };
+    Control? _sizeRow;
+
     static readonly string[] VideoFormats = { "mp4", "mkv", "webm" };
     static readonly string[] AudioFormats = { "mp3", "m4a", "opus", "flac", "wav" };
     static readonly string[] AnimFormats = { "gif", "webp" };
@@ -91,6 +99,33 @@ public class OptionsDialog : Dialog
         _animArea.Children.Add(_keepVideo);
         _animArea.Children.Add(Ui.Text("Loops forever. Best for short clips — long videos make very large files.", "sub", "small"));
         root.Children.Add(_animArea);
+
+        // Size limit: the finished video is re-encoded to fit (e.g. Discord's 20 MB).
+        _size.ItemsSource = DownloadOptions.SizeLimits.Select(s => s.label).ToList();
+        _size.Width = 250;
+        _size.SelectedIndex = Math.Max(0, Array.FindIndex(DownloadOptions.SizeLimits, s => s.mb == Result.TargetSizeMB));
+        ToolTip.SetTip(_size, "The video is made smaller after it downloads so it fits, for example to send on Discord.\nShort videos stay sharp; long ones get a smaller picture.");
+        _sizeRow = Row("Size limit", _size);
+        root.Children.Add(_sizeRow);
+
+        // Part of the video: a single video whose length is known.
+        if (info != null && !playlist && !info.IsDirectFile && info.Duration > 0)
+        {
+            _clipTo.Text = Fmt.Time(info.Duration);
+            _clipFrom.Text = "0:00";
+            var clipRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { _clip, _clipFrom, Ui.Text("to", "sub"), _clipTo } };
+            foreach (var c in clipRow.Children) c.VerticalAlignment = VerticalAlignment.Center;
+            ToolTip.SetTip(_clip, "Downloads just that stretch, which is much quicker for a moment from a long video.\nType times like 90, 1:30 or 1:02:03.");
+            // Changing a time turns the option on.
+            _clipFrom.TextChanged += (_, _) => { if (_clipFrom.IsFocused) _clip.IsChecked = true; };
+            _clipTo.TextChanged += (_, _) => { if (_clipTo.IsFocused) _clip.IsChecked = true; };
+            root.Children.Add(Row("Part", clipRow));
+            if (!Engine.HasFfmpeg)
+            {
+                _clip.IsEnabled = _clipFrom.IsEnabled = _clipTo.IsEnabled = false;
+                ToolTip.SetTip(_clip, "Needs the converter (ffmpeg): Settings → Download engine.");
+            }
+        }
 
         root.Children.Add(_subsArea);
         var subsRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 24, Children = { _subs, _embed } };
@@ -275,6 +310,7 @@ public class OptionsDialog : Dialog
         _quality.IsVisible = _qualityLabel.IsVisible = video || anim;
         _format.IsEnabled = _quality.IsEnabled = _qualityLabel.IsEnabled = !direct || anim;
         _animArea.IsVisible = anim;
+        if (_sizeRow != null) _sizeRow.IsVisible = video && !direct && Engine.HasFfmpeg;
         _subsArea.IsVisible = !anim && !_noSubs;
         _subs.IsEnabled = video && !direct;
         SubsChanged();
@@ -331,6 +367,20 @@ public class OptionsDialog : Dialog
         o.Kind = _anim.IsChecked == true ? MediaKind.Animation : _audio.IsChecked == true ? MediaKind.Audio : MediaKind.Video;
         o.Format = (_format.SelectedItem?.ToString() ?? "mp4").ToLowerInvariant();
         if (o.Kind == MediaKind.Video && _quality.SelectedIndex >= 0) o.MaxHeight = _qualityValues[_quality.SelectedIndex];
+        if (o.Kind == MediaKind.Video)
+            o.TargetSizeMB = _info?.IsDirectFile == true || !Engine.HasFfmpeg ? 0 : DownloadOptions.SizeLimits[Math.Max(0, _size.SelectedIndex)].mb;
+
+        ClipStart = ClipEnd = -1;
+        if (_clip.IsChecked == true && _clip.IsEnabled && _info != null)
+        {
+            double s = Engine.ParseTime(_clipFrom.Text), e = Engine.ParseTime(_clipTo.Text);
+            if (s < 0 || e < 0) { await Info(this, Title ?? "", "Type the times like 90, 1:30 or 1:02:03."); return; }
+            if (e > _info.Duration + 1) { await Info(this, Title ?? "", $"The video is only {Fmt.Time(_info.Duration)} long."); return; }
+            e = Math.Min(e, _info.Duration);
+            if (e - s < 0.5) { await Info(this, Title ?? "", "The end has to come after the start."); return; }
+            // The whole video picked: just download it normally.
+            if (s > 0.5 || e < _info.Duration - 0.5) { ClipStart = s; ClipEnd = e; }
+        }
         if (o.Kind == MediaKind.Animation)
         {
             if (_quality.SelectedIndex >= 0) o.AnimationWidth = _qualityValues[_quality.SelectedIndex];

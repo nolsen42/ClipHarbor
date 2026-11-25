@@ -9,6 +9,9 @@ A free, open-source video and audio downloader for Windows, macOS and Linux. No 
 - **Paste Link**: copy a link, press the button (or Ctrl+V, ⌘V on a Mac), choose your options and download. You can also drag links onto the window or pass them on the command line.
 - **Video or audio only**: MP4, MKV or WEBM video up to the best quality the site offers (4K/8K included), or MP3, M4A, OPUS, FLAC or WAV audio.
 - **GIF and animated WebP**: turn short clips (like videos on X/Twitter that were meant to be GIFs) into looping GIF or WebP files, in small, medium, large or full size. You can also right-click any finished video and choose **Make a GIF** or **Make an animated WebP**.
+- **Only the part you want**: type a start and end time and only that stretch is downloaded, cut exactly, which is much quicker for a moment from a long video or stream. Works for GIFs too.
+- **Fit to a size**: pick a size limit (for example 20 MB for Discord, 25 MB for email) and the finished video is re-encoded to fit, keeping it as sharp as the size allows. Right-click any finished video and choose **Make smaller** to make a smaller copy.
+- **SponsorBlock**: in Settings, choose to cut out or mark as chapters the sponsor segments, self-promotion and "like and subscribe" reminders in YouTube videos, using the community-made [SponsorBlock](https://sponsor.ajay.app) list.
 - **Send from your browser**: right-click a video, a link or an X post and choose **Download with ClipHarbor** or **Make a GIF with ClipHarbor** (see [below](#send-from-your-browser)).
 - **Whole playlists and channels**: pick which videos you want, optionally saved into a folder named after the playlist.
 - **Subtitles**: choose languages, saved as files or embedded in the video.

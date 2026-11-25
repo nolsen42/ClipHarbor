@@ -504,11 +504,45 @@ public static class Engine
                 if (o.EmbedSubtitles) a.AddRange(new[] { "--embed-subs", "--compat-options", "no-keep-subs" });
             }
         }
+        if (it.IsClip && ff)
+        {
+            // Only that stretch is downloaded; cutting exactly at the times re-encodes a moment around each cut.
+            a.AddRange(new[] { "--download-sections", $"*{Secs(it.ClipStart)}-{Secs(it.ClipEnd)}", "--force-keyframes-at-cuts" });
+        }
+        // SponsorBlock (YouTube only; yt-dlp ignores it elsewhere). Its times are for the whole video, so not for clips.
+        if (ff && !it.IsClip && o.Kind != MediaKind.Animation && s.SponsorBlock is "mark" or "remove")
+            a.AddRange(new[] { s.SponsorBlock == "remove" ? "--sponsorblock-remove" : "--sponsorblock-mark", SponsorCategories });
         if (ff && s.EmbedMetadata && o.Kind != MediaKind.Animation) a.Add("--embed-metadata");
         if (ff && s.EmbedThumbnail && (o.Kind == MediaKind.Video ? o.Format is "mp4" or "mkv" : o.Format is "mp3" or "m4a" or "flac" or "opus")) a.Add("--embed-thumbnail");
         a.Add("--");
         a.Add(it.Url);
         return a;
+    }
+
+    /// <summary>Paid promotions, self-promotion and "like and subscribe" reminders.</summary>
+    const string SponsorCategories = "sponsor,selfpromo,interaction";
+
+    static string Secs(double s) => s.ToString("0.###", CultureInfo.InvariantCulture);
+
+    /// <summary>A time for a file name, without colons (not allowed on Windows): 1m05s, 1h02m03s.</summary>
+    public static string TimeForName(double s)
+    {
+        var t = TimeSpan.FromSeconds(Math.Max(0, Math.Round(s)));
+        return t.TotalHours >= 1 ? $"{(int)t.TotalHours}h{t.Minutes:00}m{t.Seconds:00}s" : $"{t.Minutes}m{t.Seconds:00}s";
+    }
+
+    /// <summary>Reads a time typed as 90, 1:30, 1:02:03 or 1:30.5. Returns -1 when it can't be read.</summary>
+    public static double ParseTime(string? text)
+    {
+        var t = (text ?? "").Trim();
+        if (t.Length == 0) return -1;
+        double total = 0;
+        foreach (var part in t.Split(':'))
+        {
+            if (!double.TryParse(part.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v) || v < 0) return -1;
+            total = total * 60 + v;
+        }
+        return total;
     }
 
     // The Windows list on every system, so folders stay valid when copied between computers.
@@ -529,11 +563,18 @@ public static class Engine
         if (animation && !HasFfmpeg)
             throw new InvalidOperationException("Making GIF or WebP files needs the converter (ffmpeg). Open Settings → Download engine to add it.");
 
+        bool shrink = it.Options.Kind == MediaKind.Video && it.Options.TargetSizeMB > 0;
+        if (shrink && !HasFfmpeg)
+            throw new InvalidOperationException("Making a video smaller needs the converter (ffmpeg). Open Settings → Download engine to add it.");
+        if (it.IsClip && !HasFfmpeg)
+            throw new InvalidOperationException("Downloading part of a video needs the converter (ffmpeg). Open Settings → Download engine to add it.");
+
         // Converting a file that's already on this computer.
         if (it.SourceFile.Length > 0)
         {
             if (!File.Exists(it.SourceFile)) throw new InvalidOperationException("The video file isn't there anymore: " + it.SourceFile);
-            await MakeAnimationAsync(it, it.SourceFile, keepSource: true, ct);
+            if (animation) await MakeAnimationAsync(it, it.SourceFile, keepSource: true, ct);
+            else if (shrink) await ShrinkAsync(it, it.SourceFile, keepSource: true, ct);
             return;
         }
 
@@ -542,12 +583,120 @@ public static class Engine
         else
             await YtDlpDownloadAsync(it, ct);
 
-        if (animation)
+        if (animation || shrink)
         {
             if (string.IsNullOrEmpty(it.FilePath) || !File.Exists(it.FilePath))
                 throw new InvalidOperationException("The video downloaded, but its file couldn't be found to convert.");
-            await MakeAnimationAsync(it, it.FilePath, it.Options.KeepVideo, ct);
+            if (animation) await MakeAnimationAsync(it, it.FilePath, it.Options.KeepVideo, ct);
+            else await ShrinkAsync(it, it.FilePath, keepSource: false, ct);
         }
+    }
+
+    // ---------- fit to a size ----------
+
+    /// <summary>Re-encodes a video (H.264 + AAC in MP4, two passes) so it fits in Options.TargetSizeMB.
+    /// The picture gets smaller when the size leaves little room per second. A file that already fits is kept as it is.</summary>
+    public static async Task ShrinkAsync(DownloadItem it, string source, bool keepSource, CancellationToken ct)
+    {
+        var ff = Ffmpeg ?? throw new InvalidOperationException("Making a video smaller needs the converter (ffmpeg). Open Settings → Download engine to add it.");
+        // Sites differ on what "10 MB" means; 1 MB = 1,000,000 bytes is under the limit either way.
+        long limit = (long)it.Options.TargetSizeMB * 1_000_000;
+        long size = new FileInfo(source).Length;
+        if (size <= limit)
+        {
+            // Already small enough. From the menu, say so instead of making a copy.
+            if (keepSource) throw new InvalidOperationException($"This video is already under {it.Options.TargetSizeMB} MB ({Fmt.Bytes(size)}).");
+            it.FilePath = source; it.TotalBytes = size;
+            return;
+        }
+
+        it.Phase = "shrinking"; it.Progress = 0; it.Speed = 0; it.Eta = -1;
+        var (duration, hasAudio, height) = await ProbeAsync(ff, source, ct);
+        if (duration <= 0) throw new InvalidOperationException("Couldn't tell how long this video is, so it can't be fitted to a size.");
+
+        var dir = Path.GetDirectoryName(Path.GetFullPath(source))!;
+        var name = Path.GetFileNameWithoutExtension(source);
+        // A copy from the menu gets its own name; after a download it simply replaces the big file.
+        var baseName = keepSource ? $"{name} ({it.Options.TargetSizeMB} MB)" : name;
+        var target = Path.Combine(dir, baseName + ".mp4");
+        for (int n = 2; File.Exists(target) && !string.Equals(target, source, StringComparison.OrdinalIgnoreCase); n++) target = Path.Combine(dir, $"{baseName} ({n}).mp4");
+        var tmp = Path.Combine(dir, baseName + ".shrinking.mp4");
+        var passLog = Path.Combine(Path.GetTempPath(), "clipharbor-" + it.Id);
+
+        // Leave about 4% for the MP4 container; try once more with less if the first result is still too big.
+        double budget = 0.96;
+        try
+        {
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                double totalKbps = limit * 8 * budget / 1000 / duration;
+                int audioKbps = !hasAudio ? 0 : totalKbps > 1000 ? 128 : totalKbps > 400 ? 96 : totalKbps > 160 ? 64 : 32;
+                int videoKbps = (int)(totalKbps - audioKbps);
+                if (videoKbps < 60)
+                    throw new InvalidOperationException($"This video is too long to look OK in {it.Options.TargetSizeMB} MB. Try downloading only part of it, or a bigger size.");
+                // Fewer pixels when there's little room per second keeps it sharp instead of blocky.
+                int maxH = videoKbps >= 3500 ? 1080 : videoKbps >= 1200 ? 720 : videoKbps >= 600 ? 480 : videoKbps >= 300 ? 360 : 240;
+                if (height > 0) maxH = Math.Min(maxH, height);
+                var vf = $"scale=-2:'min({maxH},ih)'";
+                // 0:V is the video itself, not an embedded cover picture.
+                var common = new List<string> { "-hide_banner", "-nostdin", "-y", "-i", source, "-map", "0:V:0", "-vf", vf, "-c:v", "libx264", "-preset", "medium",
+                    "-b:v", videoKbps + "k", "-maxrate", (int)(videoKbps * 1.4) + "k", "-bufsize", videoKbps * 2 + "k", "-passlogfile", passLog, "-progress", "pipe:1", "-nostats" };
+
+                // -pass:v, not -pass: only the picture uses two passes (the sound has no first-pass log).
+                var pass1 = new List<string>(common) { "-pass:v", "1", "-an", "-f", "null", "-" };
+                await RunFfmpegAsync(ff, pass1, duration, 0, 0.5, it, ct);
+                var pass2 = new List<string>(common) { "-pass:v", "2" };
+                if (hasAudio) pass2.AddRange(new[] { "-map", "0:a:0", "-c:a", "aac", "-b:a", audioKbps + "k", "-ac", "2" }); else pass2.Add("-an");
+                pass2.AddRange(new[] { "-movflags", "+faststart", "-map_metadata", "0", "-f", "mp4", tmp });
+                await RunFfmpegAsync(ff, pass2, duration, 0.5, 0.5, it, ct);
+
+                if (new FileInfo(tmp).Length <= limit) break;
+                if (attempt == 1) throw new InvalidOperationException($"Couldn't get this video under {it.Options.TargetSizeMB} MB. Try a bigger size or only part of it.");
+                budget *= 0.85 * limit / new FileInfo(tmp).Length;
+            }
+            if (!keepSource) try { File.Delete(source); } catch { }
+            File.Move(tmp, target, true);
+        }
+        finally
+        {
+            try { File.Delete(tmp); } catch { }
+            foreach (var f in Directory.EnumerateFiles(Path.GetTempPath(), "clipharbor-" + it.Id + "*")) try { File.Delete(f); } catch { }
+        }
+        it.FilePath = target;
+        it.TotalBytes = new FileInfo(target).Length;
+        it.Progress = 1; it.Phase = "";
+    }
+
+    /// <summary>Length in seconds, whether there's sound, and the picture's height, read from ffmpeg's description of the file.</summary>
+    static async Task<(double duration, bool audio, int height)> ProbeAsync(string ff, string file, CancellationToken ct)
+    {
+        using var p = Process.Start(Psi(ff, new[] { "-hide_banner", "-nostdin", "-i", file }))!;
+        _ = p.StandardOutput.ReadToEndAsync(ct);
+        var text = await p.StandardError.ReadToEndAsync(ct);
+        await p.WaitForExitAsync(ct);
+        double d = 0; int h = 0;
+        var m = System.Text.RegularExpressions.Regex.Match(text, @"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)");
+        if (m.Success) d = int.Parse(m.Groups[1].Value) * 3600 + int.Parse(m.Groups[2].Value) * 60 + double.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture);
+        var v = System.Text.RegularExpressions.Regex.Match(text, @"Stream #.*Video:.*?, (\d{2,5})x(\d{2,5})");
+        if (v.Success) h = int.Parse(v.Groups[2].Value);
+        return (d, text.Contains("Audio:"), h);
+    }
+
+    /// <summary>Runs ffmpeg with -progress pipe:1, reporting progress from <paramref name="from"/> over <paramref name="span"/>.</summary>
+    static async Task RunFfmpegAsync(string ff, List<string> args, double duration, double from, double span, DownloadItem it, CancellationToken ct)
+    {
+        var err = new StringBuilder();
+        using var p = Process.Start(Psi(ff, args))!;
+        using var reg = ct.Register(() => { try { p.Kill(true); } catch { } });
+        var errTask = Task.Run(async () => { string? l; while ((l = await p.StandardError.ReadLineAsync()) != null) lock (err) err.AppendLine(l); });
+        string? line;
+        while ((line = await p.StandardOutput.ReadLineAsync()) != null)
+            if (line.StartsWith("out_time_us=") && long.TryParse(line[12..], out var us) && duration > 0)
+                it.Progress = from + span * Math.Clamp(us / 1e6 / duration, 0, 1);
+        await p.WaitForExitAsync();
+        await errTask;
+        ct.ThrowIfCancellationRequested();
+        if (p.ExitCode != 0) { string e; lock (err) e = err.ToString(); throw new InvalidOperationException("Couldn't make the video smaller: " + CleanError(e)); }
     }
 
     /// <summary>Downloads without sign-in unless this item needed it before; if the site asks for sign-in, tries once more with it.</summary>
