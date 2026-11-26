@@ -2,6 +2,8 @@
 
 A free, open-source video and audio downloader for Windows, macOS and Linux. No download caps, no playlist limits, no account.
 
+**Website:** [nolsen42.github.io/ClipHarbor](https://nolsen42.github.io/ClipHarbor/) (the page is `docs/index.html`, published with GitHub Pages from the `docs` folder on `main`).
+
 ![ClipHarbor main window](docs/screenshot.png)
 
 ## Features

@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClipHarbor</title>
+<meta name="description" content="A free, open-source video and audio downloader for Windows, macOS, Linux and Android. No ads, no account, no download caps.">
+<meta property="og:title" content="ClipHarbor">
+<meta property="og:description" content="A free, open-source video and audio downloader. No ads, no account, no download caps.">
+<meta property="og:image" content="https://nolsen42.github.io/ClipHarbor/screenshot.png">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="icon-64.png">
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f4f5f9;
+  --text: #1b1d24;
+  --muted: #5b6070;
+  --line: #e2e4ec;
+  --accent: #3b6ae8;
+  --accent-2: #7650e6;
+  --accent-text: #ffffff;
+  --card: #ffffff;
+  --code: #eef0f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #13151b;
+    --bg-soft: #1a1d25;
+    --text: #e9ebf1;
+    --muted: #a1a6b5;
+    --line: #2b2f3b;
+    --accent: #5b84f0;
+    --accent-2: #8c6cf0;
+    --card: #1d2029;
+    --code: #262a35;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+header.top { border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+header.top .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+header.top .brand img { width: 28px; height: 28px; }
+header.top nav { margin-left: auto; display: flex; gap: 20px; font-size: 15px; }
+header.top nav a { color: var(--muted); text-decoration: none; }
+header.top nav a:hover { color: var(--text); }
+
+.hero { text-align: center; padding: 64px 0 40px; }
+.hero img.icon { width: 88px; height: 88px; }
+.hero h1 { font-size: clamp(32px, 6vw, 48px); line-height: 1.15; margin: 18px 0 12px; letter-spacing: -0.02em; }
+.hero p.lead { font-size: 19px; color: var(--muted); max-width: 620px; margin: 0 auto; }
+.promise { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin: 22px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 15px; }
+.promise li::before { content: "✓ "; color: var(--accent); font-weight: 700; }
+
+.get { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 26px; border-radius: 10px; font-weight: 600; font-size: 17px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-text); text-decoration: none;
+}
+.btn:hover { filter: brightness(1.07); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.get .sub { font-size: 14px; color: var(--muted); }
+.get .alt { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: 14px; }
+
+.shot { margin: 40px auto 0; max-width: 960px; }
+.shot img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(20, 24, 40, 0.14); }
+
+section { padding: 56px 0; }
+section.soft { background: var(--bg-soft); }
+section h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
+section p.intro { color: var(--muted); margin: 0 0 28px; max-width: 680px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 15px; }
+tr:last-child td { border-bottom: 0; }
+th { background: var(--bg-soft); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+td .note { color: var(--muted); font-size: 14px; }
+tr.mine td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+code { background: var(--code); padding: 2px 6px; border-radius: 5px; font-size: 0.9em; overflow-wrap: anywhere; }
+
+.faq details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 20px; margin-bottom: 10px; }
+.faq summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
+.faq details p { color: var(--muted); margin: 0 0 14px; }
+
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+@media (max-width: 640px) {
+  header.top nav a.hide-sm { display: none; }
+  .hero { padding-top: 40px; }
+  table, thead, tbody, tr, th, td { display: block; }
+  thead { display: none; }
+  tr { border-bottom: 1px solid var(--line); padding: 6px 0; }
+  tr:last-child { border-bottom: 0; }
+  td { border-bottom: 0; padding: 4px 16px; }
+  td:first-child { font-weight: 600; padding-top: 12px; }
+  td:last-child { padding-bottom: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="icon-64.png" alt="" width="28" height="28">ClipHarbor</a>
+    <nav>
+      <a href="#features" class="hide-sm">Features</a>
+      <a href="#download">Download</a>
+      <a href="#questions" class="hide-sm">Questions</a>
+      <a href="https://github.com/nolsen42/ClipHarbor">Source code</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <img class="icon" src="icon-256.png" alt="" width="88" height="88">
+    <h1>Download videos and audio, without the catch</h1>
+    <p class="lead">ClipHarbor saves videos and music from YouTube, X, Reddit, TikTok and over a thousand other sites. Paste a link, pick a quality, done.</p>
+    <ul class="promise">
+      <li>Free, with no paid version</li>
+      <li>No ads</li>
+      <li>No account</li>
+      <li>No download caps</li>
+      <li>Open source</li>
+    </ul>
+
+    <div class="get">
+      <a class="btn" id="main-btn" href="#download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        <span id="main-label">Download ClipHarbor</span>
+      </a>
+      <div class="sub" id="main-sub">Windows, macOS, Linux and Android</div>
+      <div class="alt" id="main-alt"></div>
+    </div>
+
+    <div class="shot">
+      <picture>
+        <source srcset="screenshot-dark.png" media="(prefers-color-scheme: dark)">
+        <img src="screenshot.png" alt="The ClipHarbor window with a list of downloads" width="1200" height="760">
+      </picture>
+    </div>
+  </div>
+
+  <section class="soft" id="features">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="intro">ClipHarbor is a friendly window around <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> and <a href="https://ffmpeg.org">FFmpeg</a>, the open-source tools most downloaders use behind the scenes.</p>
+      <div class="grid">
+        <div class="card"><h3>Any quality, video or audio</h3><p>MP4, MKV or WEBM up to the best the site offers, 4K and 8K included. Or just the sound as MP3, M4A, OPUS, FLAC or WAV.</p></div>
+        <div class="card"><h3>Only the part you want</h3><p>Type a start and end time and only that stretch is downloaded. Much quicker for one moment from a long video or stream.</p></div>
+        <div class="card"><h3>GIFs from any clip</h3><p>Turn a short video into a looping GIF or animated WebP, in the size you choose.</p></div>
+        <div class="card"><h3>Small enough for Discord</h3><p>Pick a size limit (20, 50, 100 or 500 MB) and the video is re-encoded to fit, as sharp as the size allows.</p></div>
+        <div class="card"><h3>Playlists and channels</h3><p>Pick which videos you want from a playlist, or follow a channel and new videos download by themselves.</p></div>
+        <div class="card"><h3>Skip the sponsor reads</h3><p>Optionally cut out or mark sponsor segments in YouTube videos, using the community-made SponsorBlock list.</p></div>
+        <div class="card"><h3>Subtitles</h3><p>Choose languages and have them built into the video, or saved next to it.</p></div>
+        <div class="card"><h3>Send from your browser</h3><p>Right-click a video and choose Download with ClipHarbor, with the extension for Chrome, Edge, Brave and Firefox.</p></div>
+        <div class="card"><h3>Keeps itself working</h3><p>Sites change often. ClipHarbor updates its download engine by itself, so links keep working.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="wrap">
+      <h2>Download</h2>
+      <p class="intro">Every file comes straight from the <a href="https://github.com/nolsen42/ClipHarbor/releases/latest">GitHub Releases page</a>, built from the public source code by GitHub itself. <span id="version"></span></p>
+      <table>
+        <thead><tr><th>System</th><th>File</th><th>How to start it</th></tr></thead>
+        <tbody>
+          <tr data-os="windows">
+            <td>Windows 10 and 11</td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-windows-x64-setup.exe">Installer (.exe)</a><br><a class="note" href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-windows-x64.exe">Portable version</a></td>
+            <td>Run the installer. No admin rights needed; it adds ClipHarbor to the Start menu. The portable version runs from anywhere without installing.</td>
+          </tr>
+          <tr data-os="mac">
+            <td>Mac with Apple chip (M1 and later)</td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-macos-apple-silicon.zip">Apple chip (.zip)</a></td>
+            <td rowspan="2">Unzip and move ClipHarbor to Applications. The first time, open <b>System Settings → Privacy &amp; Security</b> and press <b>Open Anyway</b>.</td>
+          </tr>
+          <tr data-os="mac">
+            <td>Mac with Intel chip</td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-macos-intel.zip">Intel (.zip)</a></td>
+          </tr>
+          <tr data-os="linux">
+            <td>Linux</td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-x64.AppImage">AppImage (x64)</a><br><a class="note" href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-arm64.AppImage">ARM, e.g. Raspberry Pi</a></td>
+            <td>Right-click → Properties → <b>Allow executing as program</b> (or <code>chmod +x</code>), then double-click it.</td>
+          </tr>
+          <tr data-os="android">
+            <td>Android 7 and newer</td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-android.apk">ClipHarbor-android.apk</a></td>
+            <td>Download it on your phone and open it. Android asks once to allow installing apps from your browser. Then press <b>Share</b> in YouTube or any app and pick ClipHarbor.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="intro" style="margin-top:20px">
+        <b>Browser extension:</b>
+        <a href="https://chromewebstore.google.com/detail/send-to-clipharbor/lpakdanjdcpnbnllbkldcgomomakliol">Chrome, Edge, Brave</a> ·
+        <a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-extension-firefox.xpi">Firefox</a>.
+        Not on iPhone or iPad: Apple doesn't allow apps like this outside its App Store.
+      </p>
+    </div>
+  </section>
+
+  <section class="soft faq" id="questions">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <p class="intro">The honest answers, including the slightly awkward ones.</p>
+
+      <details>
+        <summary>Is it really free? What's the catch?</summary>
+        <p>There isn't one. ClipHarbor is a hobby project with no ads, no tracking, no paid tier and no account. All the code is public on GitHub, so anyone can check what it does.</p>
+      </details>
+      <details>
+        <summary>Windows says "Windows protected your PC", or my antivirus warns about it</summary>
+        <p>Signing a program with a certificate Windows trusts costs money every year, and ClipHarbor isn't signed yet. New unsigned programs that download things sometimes get flagged by antivirus software by mistake. On the blue Windows screen, press <b>More info → Run anyway</b>. If you'd rather check first, the source code and the build steps are all public, and every file is built by GitHub, not on someone's computer.</p>
+      </details>
+      <details>
+        <summary>Why isn't it in the Google Play Store?</summary>
+        <p>Google Play doesn't allow apps that download from YouTube, so ClipHarbor is installed from its own file. It updates itself from GitHub, and Android asks you before installing each update.</p>
+      </details>
+      <details>
+        <summary>Android says "App not installed"</summary>
+        <p>A copy signed differently (for example an old test version) is already on the phone. Uninstall it first, then install again.</p>
+      </details>
+      <details>
+        <summary>Why does reading a link take a few seconds on my phone?</summary>
+        <p>yt-dlp starts up and works through YouTube's checks each time you paste a link. It's quicker on a computer, and on newer phones.</p>
+      </details>
+      <details>
+        <summary>Is downloading videos legal?</summary>
+        <p>It depends on where you live and what you download. Saving your own videos, Creative Commons videos, or something for personal offline viewing is usually fine; sharing other people's work usually isn't. Please respect the creators and the sites' rules.</p>
+      </details>
+      <details>
+        <summary>Something doesn't work</summary>
+        <p>Sites change often, and ClipHarbor updates its engine every day to keep up. If a link still fails, <a href="https://github.com/nolsen42/ClipHarbor/issues">open an issue on GitHub</a> with the link and the message you saw.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>ClipHarbor is open source. Built on yt-dlp and FFmpeg.</span>
+    <span><a href="https://github.com/nolsen42/ClipHarbor">GitHub</a> · <a href="https://github.com/nolsen42/ClipHarbor/releases">All releases</a> · <a href="https://github.com/nolsen42/ClipHarbor/issues">Report a problem</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var base = "https://github.com/nolsen42/ClipHarbor/releases/latest/download/";
+  var ua = navigator.userAgent || "";
+  var plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+  var os =
+    /Android/i.test(ua) ? "android" :
+    /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(plat) && navigator.maxTouchPoints > 1) ? "ios" :
+    /Win/i.test(plat) || /Windows/i.test(ua) ? "windows" :
+    /Mac/i.test(plat) || /Mac OS X/i.test(ua) ? "mac" :
+    /Linux|X11|CrOS/i.test(plat + ua) ? "linux" : "";
+
+  var btn = document.getElementById("main-btn");
+  var label = document.getElementById("main-label");
+  var sub = document.getElementById("main-sub");
+  var alt = document.getElementById("main-alt");
+  function link(text, file) { return '<a href="' + base + file + '">' + text + "</a>"; }
+
+  if (os === "windows") {
+    btn.href = base + "ClipHarbor-windows-x64-setup.exe";
+    label.textContent = "Download for Windows";
+    sub.textContent = "Installer for Windows 10 and 11, 64-bit";
+    alt.innerHTML = link("Portable version", "ClipHarbor-windows-x64.exe") + '<a href="#download">Other systems</a>';
+  } else if (os === "mac") {
+    btn.href = base + "ClipHarbor-macos-apple-silicon.zip";
+    label.textContent = "Download for Mac";
+    sub.textContent = "For Macs with an Apple chip (M1 and later)";
+    alt.innerHTML = link("Older Mac with an Intel chip", "ClipHarbor-macos-intel.zip") + '<a href="#download">Other systems</a>';
+  } else if (os === "linux") {
+    btn.href = base + "ClipHarbor-linux-x64.AppImage";
+    label.textContent = "Download for Linux";
+    sub.textContent = "AppImage for 64-bit PCs";
+    alt.innerHTML = link("ARM (Raspberry Pi)", "ClipHarbor-linux-arm64.AppImage") + '<a href="#download">Other systems</a>';
+  } else if (os === "android") {
+    btn.href = base + "ClipHarbor-android.apk";
+    label.textContent = "Download for Android";
+    sub.textContent = "Open the file after it downloads to install it";
+    alt.innerHTML = '<a href="#download">Other systems</a>';
+  } else if (os === "ios") {
+    label.textContent = "See the downloads";
+    sub.textContent = "Not available on iPhone or iPad: Apple only allows App Store apps. It runs on Windows, Mac, Linux and Android.";
+  }
+  if (os && os !== "ios") {
+    var rows = document.querySelectorAll('tr[data-os="' + os + '"]');
+    for (var i = 0; i < rows.length; i++) rows[i].className = "mine";
+  }
+
+  // The latest version number, if GitHub answers; the page works the same without it.
+  try {
+    fetch("https://api.github.com/repos/nolsen42/ClipHarbor/releases/latest")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.tag_name) return;
+        var when = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
+        document.getElementById("version").textContent = "Latest version: " + rel.tag_name + (when ? ", released " + when + "." : ".");
+        if (os && os !== "ios") sub.textContent += " · " + rel.tag_name;
+      })
+      .catch(function () {});
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
