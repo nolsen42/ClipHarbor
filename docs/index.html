@@ -91,6 +91,7 @@ th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--li
 tr:last-child td { border-bottom: 0; }
 th { background: var(--bg-soft); font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 td .note { color: var(--muted); font-size: 14px; }
+td:nth-child(2) { white-space: nowrap; }
 tr.mine td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
 code { background: var(--code); padding: 2px 6px; border-radius: 5px; font-size: 0.9em; overflow-wrap: anywhere; }
 
@@ -199,12 +200,12 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
           </tr>
           <tr data-os="linux">
             <td>Linux</td>
-            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-x64.AppImage">AppImage (x64)</a><br><a class="note" href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-arm64.AppImage">ARM, e.g. Raspberry Pi</a></td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-x64.AppImage">AppImage (x64)</a><br><a class="note" href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-arm64.AppImage">ARM (Raspberry Pi)</a></td>
             <td>Right-click → Properties → <b>Allow executing as program</b> (or <code>chmod +x</code>), then double-click it.</td>
           </tr>
           <tr data-os="android">
             <td>Android 7 and newer</td>
-            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-android.apk">ClipHarbor-android.apk</a></td>
+            <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-android.apk">Android app (.apk)</a></td>
             <td>Download it on your phone and open it. Android asks once to allow installing apps from your browser. Then press <b>Share</b> in YouTube or any app and pick ClipHarbor.</td>
           </tr>
         </tbody>
