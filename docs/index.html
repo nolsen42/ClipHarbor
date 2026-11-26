@@ -214,7 +214,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
         <b>Browser extension:</b>
         <a href="https://chromewebstore.google.com/detail/send-to-clipharbor/lpakdanjdcpnbnllbkldcgomomakliol">Chrome, Edge, Brave</a> ·
         <a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-extension-firefox.xpi">Firefox</a>.
-        Not on iPhone or iPad: Apple doesn't allow apps like this outside its App Store.
+        No iPhone or iPad version yet; apps like this can't be offered in the App Store.
       </p>
     </div>
   </section>
@@ -299,7 +299,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
     alt.innerHTML = '<a href="#download">Other systems</a>';
   } else if (os === "ios") {
     label.textContent = "See the downloads";
-    sub.textContent = "Not available on iPhone or iPad: Apple only allows App Store apps. It runs on Windows, Mac, Linux and Android.";
+    sub.textContent = "No iPhone or iPad version yet; apps like this can't be offered in the App Store. It runs on Windows, Mac, Linux and Android.";
   }
   if (os && os !== "ios") {
     var rows = document.querySelectorAll('tr[data-os="' + os + '"]');
