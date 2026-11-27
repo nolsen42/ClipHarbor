@@ -5,5 +5,10 @@
   "menuDownload": { "message": "التنزيل باستخدام ClipHarbor" },
   "menuGif": { "message": "إنشاء GIF باستخدام ClipHarbor" },
   "commandGif": { "message": "إنشاء GIF من هذه الصفحة باستخدام ClipHarbor" },
-  "notHere": { "message": "هذا الإصدار من «الإرسال إلى ClipHarbor» لا يعمل على هذا الموقع." }
+  "notHere": { "message": "هذا الإصدار من «الإرسال إلى ClipHarbor» لا يعمل على هذا الموقع." },
+  "noteTitle": { "message": "لم يُفتح شيء؟" },
+  "noteBody": { "message": "الإضافة «الإرسال إلى ClipHarbor» تمرّر الروابط فقط. أما التنزيل فيقوم به تطبيق ClipHarbor المجاني، لذا يجب تثبيته على هذا الجهاز وفتحه مرة واحدة على الأقل." },
+  "noteGet": { "message": "احصل على التطبيق" },
+  "noteWorks": { "message": "يعمل" },
+  "noteClose": { "message": "إغلاق" }
 }

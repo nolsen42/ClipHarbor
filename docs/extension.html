@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get the ClipHarbor app</title>
+<meta name="description" content="The Send to ClipHarbor extension hands links to the free ClipHarbor app, which does the downloading. Get the app here.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="icon-64.png">
+<style>
+:root {
+  --bg: #ffffff; --bg-soft: #f4f5f9; --text: #1b1d24; --muted: #5b6070; --line: #e2e4ec;
+  --accent: #3b6ae8; --accent-2: #7650e6; --accent-text: #ffffff; --card: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #13151b; --bg-soft: #1a1d25; --text: #e9ebf1; --muted: #a1a6b5; --line: #2b2f3b; --accent: #5b84f0; --accent-2: #8c6cf0; --card: #1d2029; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg-soft); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+a { color: var(--accent); }
+main { max-width: 640px; margin: 0 auto; padding: 48px 16px 64px; }
+.top { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-bottom: 28px; }
+.top img { width: 32px; height: 32px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px; }
+.done { display: inline-block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+.done::before { content: "✓ "; color: #2f9e62; font-weight: 700; }
+h1 { font-size: clamp(26px, 5vw, 32px); line-height: 1.2; margin: 0 0 10px; letter-spacing: -0.01em; }
+p.lead { color: var(--muted); margin: 0 0 24px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; padding: 13px 24px; border-radius: 10px; font-weight: 600; font-size: 17px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-text); text-decoration: none;
+}
+.btn:hover { filter: brightness(1.07); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.sub { font-size: 14px; color: var(--muted); margin-top: 8px; }
+.alt { font-size: 14px; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+ol { margin: 28px 0 0; padding: 0; list-style: none; counter-reset: step; }
+ol li { counter-increment: step; position: relative; padding-inline-start: 44px; margin-bottom: 16px; min-height: 30px; }
+ol li::before {
+  content: counter(step); position: absolute; inset-inline-start: 0; top: -1px; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--bg-soft); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: 14px;
+}
+.note { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><img src="icon-64.png" alt="" width="32" height="32">ClipHarbor</div>
+  <div class="card">
+    <span class="done" data-t="added">Send to ClipHarbor is added to your browser</span>
+    <h1 data-t="title">One more step: get the ClipHarbor app</h1>
+    <p class="lead" data-t="lead">The extension only sends links. The free ClipHarbor app does the downloading, so it needs to be on this computer too.</p>
+
+    <a class="btn" id="get" href="index.html#download">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+      <span id="get-label" data-t="getAny">Download ClipHarbor</span>
+    </a>
+    <div class="sub" id="get-sub"></div>
+    <div class="alt" id="get-alt"><a href="index.html#download" data-t="other">Other systems</a></div>
+
+    <ol>
+      <li data-t="step1">Install the app you just downloaded.</li>
+      <li data-t="step2">Open it once. That lets your browser send it links.</li>
+      <li data-t="step3">Right-click a video and choose “Download with ClipHarbor”. When your browser asks whether to open ClipHarbor, tick “Always allow” and press Open.</li>
+    </ol>
+    <p class="note" data-t="already">Already have the app? Then you're all set: just open it once if you haven't yet.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  var T = {
+    es: {
+      added: "Enviar a ClipHarbor se añadió a tu navegador",
+      title: "Un paso más: consigue la app ClipHarbor",
+      lead: "La extensión solo envía enlaces. La app gratuita ClipHarbor es la que descarga, así que también tiene que estar en este equipo.",
+      getAny: "Descargar ClipHarbor", win: "Descargar para Windows", mac: "Descargar para Mac", linux: "Descargar para Linux",
+      winSub: "Instalador para Windows 10 y 11", macSub: "Para Mac con chip Apple (M1 o posterior)", linuxSub: "AppImage para PC de 64 bits",
+      portable: "Versión portable", intel: "Mac con chip Intel", other: "Otros sistemas",
+      step1: "Instala la app que acabas de descargar.",
+      step2: "Ábrela una vez. Así tu navegador podrá enviarle enlaces.",
+      step3: "Haz clic derecho en un video y elige «Descargar con ClipHarbor». Cuando el navegador pregunte si abrir ClipHarbor, marca «Permitir siempre» y pulsa Abrir.",
+      already: "¿Ya tienes la app? Entonces está todo listo: solo ábrela una vez si aún no lo has hecho."
+    },
+    pt: {
+      added: "O Enviar para o ClipHarbor foi adicionado ao navegador",
+      title: "Mais um passo: instale o app ClipHarbor",
+      lead: "A extensão só envia links. Quem baixa é o app gratuito ClipHarbor, então ele também precisa estar neste computador.",
+      getAny: "Baixar o ClipHarbor", win: "Baixar para Windows", mac: "Baixar para Mac", linux: "Baixar para Linux",
+      winSub: "Instalador para Windows 10 e 11", macSub: "Para Macs com chip Apple (M1 ou mais novo)", linuxSub: "AppImage para PCs de 64 bits",
+      portable: "Versão portátil", intel: "Mac com chip Intel", other: "Outros sistemas",
+      step1: "Instale o app que você acabou de baixar.",
+      step2: "Abra-o uma vez. Assim o navegador pode enviar links para ele.",
+      step3: "Clique com o botão direito num vídeo e escolha “Baixar com o ClipHarbor”. Quando o navegador perguntar se deve abrir o ClipHarbor, marque “Sempre permitir” e clique em Abrir.",
+      already: "Já tem o app? Então está tudo pronto: só abra-o uma vez, se ainda não abriu."
+    },
+    ru: {
+      added: "«Отправить в ClipHarbor» добавлено в браузер",
+      title: "Ещё один шаг: установите приложение ClipHarbor",
+      lead: "Расширение только передаёт ссылки. Скачивает бесплатное приложение ClipHarbor, поэтому оно тоже должно быть на этом компьютере.",
+      getAny: "Скачать ClipHarbor", win: "Скачать для Windows", mac: "Скачать для Mac", linux: "Скачать для Linux",
+      winSub: "Установщик для Windows 10 и 11", macSub: "Для Mac с чипом Apple (M1 и новее)", linuxSub: "AppImage для 64-битных ПК",
+      portable: "Портативная версия", intel: "Mac с процессором Intel", other: "Другие системы",
+      step1: "Установите только что скачанное приложение.",
+      step2: "Откройте его один раз — после этого браузер сможет передавать ему ссылки.",
+      step3: "Щёлкните правой кнопкой по видео и выберите «Скачать через ClipHarbor». Когда браузер спросит, открыть ли ClipHarbor, отметьте «Всегда разрешать» и нажмите «Открыть».",
+      already: "Приложение уже есть? Тогда всё готово: просто откройте его один раз, если ещё не открывали."
+    },
+    id: {
+      added: "Kirim ke ClipHarbor sudah ditambahkan ke browser Anda",
+      title: "Satu langkah lagi: pasang aplikasi ClipHarbor",
+      lead: "Ekstensi ini hanya mengirim tautan. Aplikasi gratis ClipHarbor yang mengunduh, jadi aplikasi itu juga harus ada di komputer ini.",
+      getAny: "Unduh ClipHarbor", win: "Unduh untuk Windows", mac: "Unduh untuk Mac", linux: "Unduh untuk Linux",
+      winSub: "Pemasang untuk Windows 10 dan 11", macSub: "Untuk Mac dengan chip Apple (M1 dan yang lebih baru)", linuxSub: "AppImage untuk PC 64-bit",
+      portable: "Versi portabel", intel: "Mac dengan chip Intel", other: "Sistem lain",
+      step1: "Pasang aplikasi yang baru saja Anda unduh.",
+      step2: "Buka sekali. Setelah itu browser bisa mengirim tautan ke aplikasi.",
+      step3: "Klik kanan video lalu pilih “Unduh dengan ClipHarbor”. Saat browser bertanya apakah akan membuka ClipHarbor, centang “Selalu izinkan” lalu tekan Buka.",
+      already: "Sudah punya aplikasinya? Berarti semua siap: cukup buka sekali jika belum pernah."
+    },
+    tr: {
+      added: "ClipHarbor'a Gönder tarayıcınıza eklendi",
+      title: "Bir adım kaldı: ClipHarbor uygulamasını edinin",
+      lead: "Eklenti yalnızca bağlantı gönderir. İndirmeyi ücretsiz ClipHarbor uygulaması yapar, bu yüzden onun da bu bilgisayarda olması gerekir.",
+      getAny: "ClipHarbor'ı indir", win: "Windows için indir", mac: "Mac için indir", linux: "Linux için indir",
+      winSub: "Windows 10 ve 11 için yükleyici", macSub: "Apple çipli Mac'ler için (M1 ve sonrası)", linuxSub: "64 bit bilgisayarlar için AppImage",
+      portable: "Taşınabilir sürüm", intel: "Intel işlemcili Mac", other: "Diğer sistemler",
+      step1: "Az önce indirdiğiniz uygulamayı kurun.",
+      step2: "Bir kez açın. Böylece tarayıcınız ona bağlantı gönderebilir.",
+      step3: "Bir videoya sağ tıklayıp “ClipHarbor ile indir”i seçin. Tarayıcı ClipHarbor'ın açılıp açılmayacağını sorduğunda “Her zaman izin ver”i işaretleyip Aç'a basın.",
+      already: "Uygulama zaten var mı? O zaman her şey hazır: henüz açmadıysanız bir kez açmanız yeterli."
+    },
+    ar: {
+      added: "تمت إضافة «الإرسال إلى ClipHarbor» إلى متصفحك",
+      title: "خطوة أخيرة: احصل على تطبيق ClipHarbor",
+      lead: "الإضافة ترسل الروابط فقط. أما التنزيل فيقوم به تطبيق ClipHarbor المجاني، لذا يجب أن يكون مثبّتًا على هذا الجهاز أيضًا.",
+      getAny: "تنزيل ClipHarbor", win: "تنزيل لنظام Windows", mac: "تنزيل لأجهزة Mac", linux: "تنزيل لنظام Linux",
+      winSub: "برنامج تثبيت لنظامي Windows 10 و11", macSub: "لأجهزة Mac بشريحة Apple (‏M1 وما بعدها)", linuxSub: "AppImage لأجهزة 64 بت",
+      portable: "النسخة المحمولة", intel: "Mac بمعالج Intel", other: "أنظمة أخرى",
+      step1: "ثبّت التطبيق الذي نزّلته للتو.",
+      step2: "افتحه مرة واحدة، حتى يتمكن متصفحك من إرسال الروابط إليه.",
+      step3: "انقر بزر الفأرة الأيمن على فيديو واختر «التنزيل باستخدام ClipHarbor». عندما يسألك المتصفح عن فتح ClipHarbor، فعّل «السماح دائمًا» واضغط «فتح».",
+      already: "هل لديك التطبيق بالفعل؟ إذن كل شيء جاهز: فقط افتحه مرة واحدة إن لم تكن قد فعلت."
+    }
+  };
+  var EN = {
+    getAny: "Download ClipHarbor", win: "Download for Windows", mac: "Download for Mac", linux: "Download for Linux",
+    winSub: "Installer for Windows 10 and 11", macSub: "For Macs with an Apple chip (M1 and later)", linuxSub: "AppImage for 64-bit PCs",
+    portable: "Portable version", intel: "Mac with an Intel chip", other: "Other systems"
+  };
+
+  var lang = (navigator.language || "en").slice(0, 2).toLowerCase();
+  var t = T[lang] || {};
+  function s(key) { return t[key] || EN[key]; }
+  if (T[lang]) {
+    document.documentElement.lang = lang;
+    if (lang === "ar") document.documentElement.dir = "rtl";
+    var els = document.querySelectorAll("[data-t]");
+    for (var i = 0; i < els.length; i++) if (t[els[i].getAttribute("data-t")]) els[i].textContent = t[els[i].getAttribute("data-t")];
+    if (t.title) document.title = t.title;
+  }
+
+  var base = "https://github.com/nolsen42/ClipHarbor/releases/latest/download/";
+  var ua = navigator.userAgent || "";
+  var plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+  var os =
+    /Win/i.test(plat) || /Windows/i.test(ua) ? "windows" :
+    /Mac/i.test(plat) || /Mac OS X/i.test(ua) ? "mac" :
+    /Linux|X11|CrOS/i.test(plat + ua) ? "linux" : "";
+
+  var btn = document.getElementById("get"), label = document.getElementById("get-label");
+  var sub = document.getElementById("get-sub"), alt = document.getElementById("get-alt");
+  function link(text, href) { var a = document.createElement("a"); a.href = href; a.textContent = text; alt.insertBefore(a, alt.firstChild); }
+  if (os === "windows") {
+    btn.href = base + "ClipHarbor-windows-x64-setup.exe"; label.textContent = s("win"); sub.textContent = s("winSub");
+    link(s("portable"), base + "ClipHarbor-windows-x64.exe");
+  } else if (os === "mac") {
+    btn.href = base + "ClipHarbor-macos-apple-silicon.zip"; label.textContent = s("mac"); sub.textContent = s("macSub");
+    link(s("intel"), base + "ClipHarbor-macos-intel.zip");
+  } else if (os === "linux") {
+    btn.href = base + "ClipHarbor-linux-x64.AppImage"; label.textContent = s("linux"); sub.textContent = s("linuxSub");
+    link("Flatpak", "clipharbor.flatpakref");
+  }
+})();
+</script>
+</body>
+</html>

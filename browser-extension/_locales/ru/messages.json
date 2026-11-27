@@ -5,5 +5,10 @@
   "menuDownload": { "message": "Скачать через ClipHarbor" },
   "menuGif": { "message": "Сделать GIF в ClipHarbor" },
   "commandGif": { "message": "Сделать GIF из этой страницы в ClipHarbor" },
-  "notHere": { "message": "Эта версия «Отправить в ClipHarbor» не работает на этом сайте." }
+  "notHere": { "message": "Эта версия «Отправить в ClipHarbor» не работает на этом сайте." },
+  "noteTitle": { "message": "Ничего не открылось?" },
+  "noteBody": { "message": "«Отправить в ClipHarbor» только передаёт ссылки. Скачивает бесплатное приложение ClipHarbor — его нужно установить на этот компьютер и открыть хотя бы раз." },
+  "noteGet": { "message": "Скачать приложение" },
+  "noteWorks": { "message": "Всё работает" },
+  "noteClose": { "message": "Закрыть" }
 }

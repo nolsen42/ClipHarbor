@@ -5,5 +5,10 @@
   "menuDownload": { "message": "Unduh dengan ClipHarbor" },
   "menuGif": { "message": "Buat GIF dengan ClipHarbor" },
   "commandGif": { "message": "Buat GIF dari halaman ini dengan ClipHarbor" },
-  "notHere": { "message": "Versi Kirim ke ClipHarbor ini tidak berfungsi di situs ini." }
+  "notHere": { "message": "Versi Kirim ke ClipHarbor ini tidak berfungsi di situs ini." },
+  "noteTitle": { "message": "Tidak ada yang terbuka?" },
+  "noteBody": { "message": "Kirim ke ClipHarbor hanya meneruskan tautan. Aplikasi gratis ClipHarbor yang mengunduh, jadi aplikasi itu harus terpasang di komputer ini dan pernah dibuka sekali." },
+  "noteGet": { "message": "Dapatkan aplikasinya" },
+  "noteWorks": { "message": "Sudah berfungsi" },
+  "noteClose": { "message": "Tutup" }
 }

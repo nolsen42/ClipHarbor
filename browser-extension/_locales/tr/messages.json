@@ -5,5 +5,10 @@
   "menuDownload": { "message": "ClipHarbor ile indir" },
   "menuGif": { "message": "ClipHarbor ile GIF yap" },
   "commandGif": { "message": "Bu sayfadan ClipHarbor ile GIF yap" },
-  "notHere": { "message": "ClipHarbor'a Gönder'in bu sürümü bu sitede çalışmıyor." }
+  "notHere": { "message": "ClipHarbor'a Gönder'in bu sürümü bu sitede çalışmıyor." },
+  "noteTitle": { "message": "Hiçbir şey açılmadı mı?" },
+  "noteBody": { "message": "ClipHarbor'a Gönder yalnızca bağlantıları iletir. İndirmeyi ücretsiz ClipHarbor uygulaması yapar; bu bilgisayarda kurulu olmalı ve en az bir kez açılmış olmalı." },
+  "noteGet": { "message": "Uygulamayı edinin" },
+  "noteWorks": { "message": "Çalışıyor" },
+  "noteClose": { "message": "Kapat" }
 }

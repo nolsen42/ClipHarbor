@@ -5,5 +5,10 @@
   "menuDownload": { "message": "Download with ClipHarbor" },
   "menuGif": { "message": "Make a GIF with ClipHarbor" },
   "commandGif": { "message": "Make a GIF from this page with ClipHarbor" },
-  "notHere": { "message": "This version of Send to ClipHarbor doesn't work on this site." }
+  "notHere": { "message": "This version of Send to ClipHarbor doesn't work on this site." },
+  "noteTitle": { "message": "Nothing opened?" },
+  "noteBody": { "message": "Send to ClipHarbor only passes links on. The free ClipHarbor app does the downloading, so it needs to be installed on this computer and opened once." },
+  "noteGet": { "message": "Get the app" },
+  "noteWorks": { "message": "It works" },
+  "noteClose": { "message": "Close" }
 }

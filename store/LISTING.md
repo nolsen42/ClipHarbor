@@ -36,7 +36,7 @@ You can also press the toolbar button to send the page you're on, or use Alt+Shi
 
 ClipHarbor then asks what you want (quality, format, GIF size, file name, folder) or, with Smart Mode on, starts straight away.
 
-Needs the free ClipHarbor app for Windows, macOS or Linux: https://github.com/nolsen42/ClipHarbor/releases
+Needs the free ClipHarbor app for Windows, macOS or Linux: https://nolsen42.github.io/ClipHarbor/extension.html (the extension opens this page when it's added, and reminds you if the app doesn't open).
 
 Private by design: the extension only acts when you click it, sends the address only to ClipHarbor on your own computer, and collects nothing. No accounts, no ads, no tracking.
 
@@ -54,7 +54,8 @@ Sends the address of the page, link, video or X post the person picks to the Cli
 - **Permission justifications:**
   - **contextMenus:** Adds the "Download with ClipHarbor" and "Make a GIF with ClipHarbor" items to the right-click menu, which is the main way the extension is used.
   - **activeTab:** Reads the address of the current tab only when the person clicks a menu item, the toolbar button or a shortcut, so that address can be sent to the ClipHarbor app.
-  - **scripting:** Fallback for opening the clipharbor:// link in the current tab if the browser refuses to open it directly. Runs only after the person clicks.
+  - **scripting:** Shows a short note in the page ("Nothing opened? You need the free ClipHarbor app") when the app doesn't open after a click, and is the fallback for opening the clipharbor:// link if the browser refuses to open it directly. Runs only after the person clicks.
+  - **storage:** Remembers, on this computer only, that the ClipHarbor app has opened, so that note stops appearing. Nothing else is stored.
   - **Host permission (x.com, twitter.com):** A small script on X/Twitter remembers which post was right-clicked, so the post itself is sent instead of the timeline's address. It reads only the post's link, and only on right-click.
 - **Remote code:** No, I am not using remote code.
 - **Data usage:** tick nothing in the list (no data is collected), then tick all three statements (not sold, not used for unrelated purposes, not used for credit).

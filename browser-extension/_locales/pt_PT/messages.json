@@ -5,5 +5,10 @@
   "menuDownload": { "message": "Transferir com o ClipHarbor" },
   "menuGif": { "message": "Criar um GIF com o ClipHarbor" },
   "commandGif": { "message": "Criar um GIF desta página com o ClipHarbor" },
-  "notHere": { "message": "Esta versão do Enviar para o ClipHarbor não funciona neste site." }
+  "notHere": { "message": "Esta versão do Enviar para o ClipHarbor não funciona neste site." },
+  "noteTitle": { "message": "Não abriu nada?" },
+  "noteBody": { "message": "O Enviar para o ClipHarbor só passa as ligações. Quem transfere é a app gratuita ClipHarbor, por isso tem de estar instalada neste computador e ter sido aberta uma vez." },
+  "noteGet": { "message": "Obter a app" },
+  "noteWorks": { "message": "Funciona" },
+  "noteClose": { "message": "Fechar" }
 }
