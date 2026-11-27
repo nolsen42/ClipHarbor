@@ -1,6 +1,8 @@
 # ClipHarbor
 
-A free, open-source video and audio downloader for Windows, macOS and Linux. No download caps, no playlist limits, no account.
+A free, open-source video and audio downloader for Windows, macOS, Linux and Android. No download caps, no playlist limits, no account.
+
+ClipHarbor is free and stays free. If it's useful to you, you can [support it on Ko-fi](https://ko-fi.com/nolsen10853).
 
 ![ClipHarbor main window](docs/screenshot.png)
 
