@@ -975,6 +975,7 @@ public class MainWindow : Window
             await Task.Delay(300);
             var preview = Environment.GetEnvironmentVariable("CLIPHARBOR_PREVIEW");
             if (preview != null) dialog = Preview(preview);
+            await RefreshFooter(); // asking the engine for its version can take longer than the wait below
             await Task.Delay(1500);
             Save(this, _shot!);
             if (dialog != null) Save(dialog, Path.ChangeExtension(_shot!, ".dialog.png"));
@@ -1014,7 +1015,7 @@ public class MainWindow : Window
             new DownloadItem { Title = "Lo-fi beats for studying (1 hour mix)", Uploader = "Another Creator", DurationSeconds = 3612, Options = new DownloadOptions { Kind = MediaKind.Audio, Format = "mp3" }, Status = ItemStatus.Queued, Added = now.AddMinutes(-1) },
             new DownloadItem { Title = "How to bake sourdough bread at home", Uploader = "Kitchen Notes", DurationSeconds = 1265, Options = new DownloadOptions { MaxHeight = 2160, Subtitles = true }, Status = ItemStatus.Done, TotalBytes = 1_480_000_000, Added = now.AddMinutes(-5), Playlist = "Weekend baking" },
             new DownloadItem { Title = "Episode 12: Building a tiny cabin", Uploader = "Workshop", DurationSeconds = 932, Options = new DownloadOptions { MaxHeight = 720 }, Status = ItemStatus.Paused, Progress = .63, TotalBytes = 98_000_000, Added = now.AddMinutes(-7) },
-            new DownloadItem { Title = "Private video", Options = o.Clone(), Status = ItemStatus.Failed, Message = "This video is private. Turn on 'Use sign-in from browser' in Settings.", Added = now.AddMinutes(-9) },
+            new DownloadItem { Title = "Private video", Options = o.Clone(), Status = ItemStatus.Failed, Message = "YouTube only shares this video with people who are signed in. Turn on \"Use sign-in from browser\" in Settings and pick a browser where you're signed in to YouTube.", Added = now.AddMinutes(-9) },
         });
         _banner.IsVisible = false;
         Window? d = null;
