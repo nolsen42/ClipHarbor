@@ -63,8 +63,21 @@ public partial class App : Application
         if (links.Count > 0) _ = _window.HandleIncoming(links);
     }
 
+    /// <summary>The desktop refused the tray icon (e.g. a sandbox without the permission, or no tray at all).</summary>
+    public static bool TrayFailed { get; private set; }
+
     void MakeTray()
     {
+        // On Linux the tray icon is set up over D-Bus in the background, and Avalonia lets a refusal
+        // escape as an unhandled error that ends the app. Carry on without the tray instead.
+        Dispatcher.UIThread.UnhandledException += (_, e) =>
+        {
+            if (e.Exception.GetType().Namespace?.StartsWith("Tmds.DBus") == true && e.Exception.StackTrace?.Contains("TrayIcon") == true)
+            {
+                e.Handled = true;
+                TrayFailed = true;
+            }
+        };
         var open = new NativeMenuItem("Open ClipHarbor");
         var check = new NativeMenuItem("Check subscriptions now");
         var quit = new NativeMenuItem("Quit ClipHarbor");

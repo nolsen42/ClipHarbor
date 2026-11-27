@@ -917,6 +917,8 @@ public class MainWindow : Window
         if (e.CloseReason is WindowCloseReason.OSShutdown or WindowCloseReason.ApplicationShutdown) { EndForSessionEnd(); return; }
         e.Cancel = true;
         var s = _state.Settings;
+        // No tray icon to come back from (the desktop refused it): hiding would leave no way back in.
+        if (App.TrayFailed) { await QuitAsync(); return; }
         if (!s.BackgroundAsked)
         {
             // Ask once; the answer is kept and can be changed in Settings.

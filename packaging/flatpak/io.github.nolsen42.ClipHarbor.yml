@@ -18,8 +18,9 @@ finish-args:
   - --filesystem=xdg-download
   - --filesystem=xdg-music
   # Tray icon (StatusNotifierItem), so subscriptions and downloads keep going with the window closed.
+  # Avalonia names it org.kde.StatusNotifierItem-<process id>-<tray number>; inside the sandbox the app is process 2.
   - --talk-name=org.kde.StatusNotifierWatcher
-  - --own-name=org.kde.StatusNotifierItem-2-1
+  - --own-name=org.kde.StatusNotifierItem-2-0
   # "Use sign-in from browser" (yt-dlp --cookies-from-browser): read-only access to the browsers' cookies,
   # and the keyring that Chromium-based browsers lock them with.
   - --filesystem=~/.mozilla/firefox:ro
