@@ -9,6 +9,7 @@ This policy covers the ClipHarbor desktop app and the **Send to ClipHarbor** bro
 - The extension only does something when you choose one of its menu items, press its toolbar button or use its keyboard shortcut.
 - When you do, it takes the address of what you picked (the page, the link, the video, or on X/Twitter the post you right-clicked) and opens it in the ClipHarbor app on your own computer through a `clipharbor://` link. That address doesn't go anywhere else.
 - On X/Twitter pages it notes which post you last right-clicked, so it can send that post. This stays in the page and is forgotten when you leave it.
+- If the ClipHarbor app doesn't open, it shows a short note in the page saying where to get the app. Once the app has opened, it remembers that in the browser's own extension storage on your computer, so the note stops appearing. Nothing else is stored.
 - It doesn't read your browsing history, the content of pages, your passwords or cookies, and it makes no network requests of its own.
 
 ## ClipHarbor (desktop app)

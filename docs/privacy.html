@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClipHarbor privacy policy</title>
+<meta name="description" content="ClipHarbor and the Send to ClipHarbor extension collect, store and share no personal data.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="icon-64.png">
+<style>
+:root { --bg: #ffffff; --bg-soft: #f4f5f9; --text: #1b1d24; --muted: #5b6070; --line: #e2e4ec; --accent: #3b6ae8; --card: #ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #13151b; --bg-soft: #1a1d25; --text: #e9ebf1; --muted: #a1a6b5; --line: #2b2f3b; --accent: #5b84f0; --card: #1d2029; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg-soft); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+a { color: var(--accent); }
+main { max-width: 720px; margin: 0 auto; padding: 48px 16px 64px; }
+.top { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-bottom: 28px; color: var(--text); text-decoration: none; }
+.top img { width: 32px; height: 32px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px; }
+h1 { font-size: clamp(26px, 5vw, 32px); line-height: 1.2; margin: 0 0 16px; }
+h2 { font-size: 20px; margin: 28px 0 8px; }
+ul { padding-inline-start: 22px; }
+li { margin-bottom: 8px; }
+code { font-size: 0.92em; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.short { padding: 14px 16px; background: var(--bg-soft); border-radius: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="top" href="index.html"><img src="icon-64.png" alt="" width="32" height="32">ClipHarbor</a>
+  <div class="card">
+    <h1>Privacy policy</h1>
+    <p>This policy covers the ClipHarbor desktop app and the <b>Send to ClipHarbor</b> browser extension.</p>
+    <p class="short"><b>In short: neither collects, stores or shares any personal data. There are no accounts, no analytics, no ads and no tracking.</b></p>
+
+    <h2>Send to ClipHarbor (browser extension)</h2>
+    <ul>
+      <li>The extension only does something when you choose one of its menu items, press its toolbar button or use its keyboard shortcut.</li>
+      <li>When you do, it takes the address of what you picked (the page, the link, the video, or on X/Twitter the post you right-clicked) and opens it in the ClipHarbor app on your own computer through a <code>clipharbor://</code> link. That address doesn't go anywhere else.</li>
+      <li>On X/Twitter pages it notes which post you last right-clicked, so it can send that post. This stays in the page and is forgotten when you leave it.</li>
+      <li>If the ClipHarbor app doesn't open, it shows a short note in the page saying where to get the app. Once the app has opened, it remembers that in the browser's own extension storage on your computer, so the note stops appearing. Nothing else is stored.</li>
+      <li>It doesn't read your browsing history, the content of pages, your passwords or cookies, and it makes no network requests of its own.</li>
+    </ul>
+
+    <h2>ClipHarbor (desktop app)</h2>
+    <ul>
+      <li>Your download list, subscriptions and settings stay in a file on your computer.</li>
+      <li>To download, ClipHarbor contacts the sites whose links or channels you give it (and loads their preview pictures), using the free tools yt-dlp and FFmpeg. If you turn on <b>Use sign-in from browser</b>, yt-dlp reads that browser's cookies on your computer and sends them only to the site you're downloading from.</li>
+      <li>It contacts GitHub to download those tools when you ask, and to check for new versions of ClipHarbor (you can turn that off in Settings).</li>
+    </ul>
+
+    <h2>Changes and contact</h2>
+    <p>If this ever changes, this page will say so first. Questions: open an issue on <a href="https://github.com/nolsen42/ClipHarbor/issues">ClipHarbor's GitHub page</a>.</p>
+  </div>
+</main>
+</body>
+</html>

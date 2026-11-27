@@ -2,7 +2,7 @@
 
 Copy and paste these into the store forms. Images are in this folder.
 
-Privacy policy link (both stores): https://github.com/nolsen42/ClipHarbor/blob/main/PRIVACY.md
+Privacy policy link (both stores): https://nolsen42.github.io/ClipHarbor/privacy.html
 Home page / support link: https://github.com/nolsen42/ClipHarbor
 
 ---
