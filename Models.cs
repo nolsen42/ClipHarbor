@@ -104,7 +104,7 @@ public class Subscription
 
 public class AppSettings
 {
-    public string Theme { get; set; } = "Light";
+    public string Theme { get; set; } = "System";
     /// <summary>Language code (Lang.Choices); "" follows the computer.</summary>
     public string Language { get; set; } = "";
     public int MaxConcurrent { get; set; } = 3;

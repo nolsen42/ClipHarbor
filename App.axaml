@@ -3,7 +3,7 @@
              xmlns:local="using:ClipHarbor"
              x:Class="ClipHarbor.App"
              Name="ClipHarbor"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Default">
 
   <Application.Resources>
     <ResourceDictionary>

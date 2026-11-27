@@ -988,7 +988,8 @@ public class MainWindow : Window
     /// <summary>Developer preview (screenshot mode only): sample rows and dialogs.</summary>
     Window? Preview(string what)
     {
-        if (what.Contains("dark")) { _state.Settings.Theme = "Dark"; App.ApplyTheme("Dark"); }
+        _state.Settings.Theme = what.Contains("dark") ? "Dark" : "Light"; // screenshots don't follow this computer's setting
+        App.ApplyTheme(_state.Settings.Theme);
         // Pictures for publishing can show a neutral folder instead of the real user name.
         var folder = Environment.GetEnvironmentVariable("CLIPHARBOR_PREVIEW_FOLDER") is { Length: > 0 } pf ? pf : AppState.DefaultFolder();
         var o = new DownloadOptions { Folder = folder };

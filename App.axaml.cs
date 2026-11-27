@@ -110,8 +110,9 @@ public partial class App : Application
         Current.RequestedThemeVariant = name switch
         {
             "Dark" => ThemeVariant.Dark,
-            "System" => ThemeVariant.Default,
-            _ => ThemeVariant.Light,
+            "Light" => ThemeVariant.Light,
+            _ => ThemeVariant.Default, // "System": follow the computer's light or dark setting
+
         };
     }
 }

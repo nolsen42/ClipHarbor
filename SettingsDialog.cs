@@ -8,7 +8,7 @@ namespace ClipHarbor;
 public class SettingsDialog : Dialog
 {
     readonly AppSettings _s;
-    readonly ComboBox _theme = new() { Width = 160, ItemsSource = new[] { "Light", "Dark", "System" } };
+    readonly ComboBox _theme = new() { Width = 160, ItemsSource = new[] { "System", "Light", "Dark" } };
     readonly ComboBox _language = new() { Width = 200, ItemsSource = Lang.Choices.Select(c => c.name).ToArray() };
     readonly NumericUpDown _parallel = new() { Minimum = 1, Maximum = 32, Width = 120, FormatString = "0", Increment = 1 };
     readonly TextBox _template = new() { Width = 300 };
@@ -73,7 +73,7 @@ public class SettingsDialog : Dialog
         _theme.SelectedItem = s.Theme;
         if (_theme.SelectedIndex < 0) _theme.SelectedIndex = 0;
         // Show the look straight away; Cancel (or closing) goes back to the saved one.
-        _theme.SelectionChanged += (_, _) => App.ApplyTheme(_theme.SelectedItem?.ToString() ?? "Light");
+        _theme.SelectionChanged += (_, _) => App.ApplyTheme(_theme.SelectedItem?.ToString() ?? "System");
         Closed += (_, _) => App.ApplyTheme(_s.Theme);
         Row("Look", _theme);
         _language.SelectedIndex = Math.Max(0, Array.FindIndex(Lang.Choices, c => c.code == (s.Language ?? "")));
@@ -254,7 +254,7 @@ public class SettingsDialog : Dialog
 
     void Save()
     {
-        _s.Theme = _theme.SelectedItem?.ToString() ?? "Light";
+        _s.Theme = _theme.SelectedItem?.ToString() ?? "System";
         _s.Language = Lang.Choices[Math.Max(0, _language.SelectedIndex)].code;
         _s.MaxConcurrent = (int)(_parallel.Value ?? 3);
         _s.Connections = (int)(_connections.Value ?? 4);
