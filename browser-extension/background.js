@@ -3,9 +3,12 @@
 
 const api = globalThis.browser ?? globalThis.chrome;
 
+/** A text in the browser's language (_locales/<language>/messages.json, English when missing). */
+const t = (key) => api.i18n.getMessage(key);
+
 const MENUS = [
-  { id: "download", title: "Download with ClipHarbor" },
-  { id: "gif", title: "Make a GIF with ClipHarbor" },
+  { id: "download", title: t("menuDownload") },
+  { id: "gif", title: t("menuGif") },
 ];
 
 api.runtime.onInstalled.addListener(async () => {
@@ -56,7 +59,7 @@ async function say(tab, text) {
     await api.action.setTitle({ title: text, tabId: tab.id });
     setTimeout(() => {
       api.action.setBadgeText({ text: "", tabId: tab.id }).catch(() => {});
-      api.action.setTitle({ title: "Download this page with ClipHarbor", tabId: tab.id }).catch(() => {});
+      api.action.setTitle({ title: t("actionTitle"), tabId: tab.id }).catch(() => {});
     }, 8000);
   } catch {}
 }
@@ -64,7 +67,7 @@ async function say(tab, text) {
 async function send(kind, url, tab) {
   if (!url) return;
   if (await skipped(url) || await skipped(tab?.url)) {
-    await say(tab, "This version of Send to ClipHarbor doesn't work on this site.");
+    await say(tab, t("notHere"));
     return;
   }
   const link = `clipharbor://${kind}?url=${encodeURIComponent(url)}`;

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Send to ClipHarbor",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Right-click a video, a link or an X post and send it to the ClipHarbor app to download it or turn it into a GIF.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "icons": {
     "16": "icons/16.png",
     "32": "icons/32.png",
@@ -10,7 +11,7 @@
     "128": "icons/128.png"
   },
   "action": {
-    "default_title": "Download this page with ClipHarbor",
+    "default_title": "__MSG_actionTitle__",
     "default_icon": {
       "16": "icons/16.png",
       "32": "icons/32.png"
@@ -31,11 +32,11 @@
   "commands": {
     "download-page": {
       "suggested_key": { "default": "Alt+Shift+D" },
-      "description": "Download this page with ClipHarbor"
+      "description": "__MSG_actionTitle__"
     },
     "gif-page": {
       "suggested_key": { "default": "Alt+Shift+G" },
-      "description": "Make a GIF from this page with ClipHarbor"
+      "description": "__MSG_commandGif__"
     }
   },
   "browser_specific_settings": {

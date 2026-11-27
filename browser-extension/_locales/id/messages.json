@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "Kirim ke ClipHarbor" },
+  "extDescription": { "message": "Klik kanan video, tautan, atau postingan X dan kirim ke ClipHarbor untuk mengunduhnya atau menjadikannya GIF." },
+  "actionTitle": { "message": "Unduh halaman ini dengan ClipHarbor" },
+  "menuDownload": { "message": "Unduh dengan ClipHarbor" },
+  "menuGif": { "message": "Buat GIF dengan ClipHarbor" },
+  "commandGif": { "message": "Buat GIF dari halaman ini dengan ClipHarbor" },
+  "notHere": { "message": "Versi Kirim ke ClipHarbor ini tidak berfungsi di situs ini." }
+}

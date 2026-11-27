@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "الإرسال إلى ClipHarbor" },
+  "extDescription": { "message": "انقر بزر الفأرة الأيمن على فيديو أو رابط أو منشور في X وأرسله إلى ClipHarbor لتنزيله أو تحويله إلى GIF." },
+  "actionTitle": { "message": "تنزيل هذه الصفحة باستخدام ClipHarbor" },
+  "menuDownload": { "message": "التنزيل باستخدام ClipHarbor" },
+  "menuGif": { "message": "إنشاء GIF باستخدام ClipHarbor" },
+  "commandGif": { "message": "إنشاء GIF من هذه الصفحة باستخدام ClipHarbor" },
+  "notHere": { "message": "هذا الإصدار من «الإرسال إلى ClipHarbor» لا يعمل على هذا الموقع." }
+}

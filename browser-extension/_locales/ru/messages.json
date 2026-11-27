@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "Отправить в ClipHarbor" },
+  "extDescription": { "message": "Щёлкните правой кнопкой по видео, ссылке или посту в X и отправьте в ClipHarbor, чтобы скачать или сделать GIF." },
+  "actionTitle": { "message": "Скачать эту страницу через ClipHarbor" },
+  "menuDownload": { "message": "Скачать через ClipHarbor" },
+  "menuGif": { "message": "Сделать GIF в ClipHarbor" },
+  "commandGif": { "message": "Сделать GIF из этой страницы в ClipHarbor" },
+  "notHere": { "message": "Эта версия «Отправить в ClipHarbor» не работает на этом сайте." }
+}

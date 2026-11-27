@@ -1,0 +1,9 @@
+{
+  "extName": { "message": "ClipHarbor'a Gönder" },
+  "extDescription": { "message": "Bir videoya, bağlantıya veya X gönderisine sağ tıklayıp indirmek ya da GIF yapmak için ClipHarbor'a gönderin." },
+  "actionTitle": { "message": "Bu sayfayı ClipHarbor ile indir" },
+  "menuDownload": { "message": "ClipHarbor ile indir" },
+  "menuGif": { "message": "ClipHarbor ile GIF yap" },
+  "commandGif": { "message": "Bu sayfadan ClipHarbor ile GIF yap" },
+  "notHere": { "message": "ClipHarbor'a Gönder'in bu sürümü bu sitede çalışmıyor." }
+}
