@@ -147,8 +147,6 @@
   "{0} · under {1} MB": "{0} · أقل من {1} MB",
   "{0} · Best": "{0} · الأفضل",
   "No limit": "بلا حد",
-  "50 MB · Nitro Basic or boosted server": "50 MB · Nitro Basic أو خادم معزّز",
-  "100 MB · server boost level 3": "100 MB · خادم معزّز بالمستوى 3",
   "500 MB · Discord Nitro": "500 MB · Discord Nitro",
 
   "Download": "تنزيل",
@@ -362,7 +360,8 @@
   "Only part:": "جزء فقط:",
   "Saved in Download/ClipHarbor": "يُحفظ في Download/ClipHarbor",
   "The end of the part has to come after the start.": "يجب أن تكون نهاية الجزء بعد بدايته.",
-  "Make smaller for Discord (20 MB)": "تصغير لـ Discord (20 MB)",
+  "Make smaller for Discord…": "تصغير لـ Discord…",
+  "Make smaller for Discord": "تصغير لـ Discord",
   "This video is already under 20 MB, so it fits on Discord as it is.": "حجم هذا الفيديو أقل من 20 MB بالفعل، لذا يناسب Discord كما هو.",
   "Delete the file": "حذف الملف",
   "Delete": "حذف",

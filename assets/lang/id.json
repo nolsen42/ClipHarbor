@@ -147,8 +147,6 @@
   "{0} · under {1} MB": "{0} · di bawah {1} MB",
   "{0} · Best": "{0} · Terbaik",
   "No limit": "Tanpa batas",
-  "50 MB · Nitro Basic or boosted server": "50 MB · Nitro Basic atau server yang di-boost",
-  "100 MB · server boost level 3": "100 MB · server boost level 3",
   "500 MB · Discord Nitro": "500 MB · Discord Nitro",
 
   "Download": "Unduh",
@@ -362,7 +360,8 @@
   "Only part:": "Hanya sebagian:",
   "Saved in Download/ClipHarbor": "Disimpan di Download/ClipHarbor",
   "The end of the part has to come after the start.": "Akhir bagian harus setelah awal.",
-  "Make smaller for Discord (20 MB)": "Perkecil untuk Discord (20 MB)",
+  "Make smaller for Discord…": "Perkecil untuk Discord…",
+  "Make smaller for Discord": "Perkecil untuk Discord",
   "This video is already under 20 MB, so it fits on Discord as it is.": "Video ini sudah di bawah 20 MB, jadi bisa langsung dikirim di Discord.",
   "Delete the file": "Hapus file",
   "Delete": "Hapus",

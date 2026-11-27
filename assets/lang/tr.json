@@ -147,8 +147,6 @@
   "{0} · under {1} MB": "{0} · {1} MB altı",
   "{0} · Best": "{0} · En iyi",
   "No limit": "Sınır yok",
-  "50 MB · Nitro Basic or boosted server": "50 MB · Nitro Basic veya takviyeli sunucu",
-  "100 MB · server boost level 3": "100 MB · 3. seviye sunucu takviyesi",
   "500 MB · Discord Nitro": "500 MB · Discord Nitro",
 
   "Download": "İndir",
@@ -362,7 +360,8 @@
   "Only part:": "Yalnızca bir bölüm:",
   "Saved in Download/ClipHarbor": "Download/ClipHarbor klasörüne kaydedilir",
   "The end of the part has to come after the start.": "Bölümün bitişi başlangıcından sonra olmalı.",
-  "Make smaller for Discord (20 MB)": "Discord için küçült (20 MB)",
+  "Make smaller for Discord…": "Discord için küçült…",
+  "Make smaller for Discord": "Discord için küçült",
   "This video is already under 20 MB, so it fits on Discord as it is.": "Bu video zaten 20 MB'ın altında, yani olduğu gibi Discord'a sığar.",
   "Delete the file": "Dosyayı sil",
   "Delete": "Sil",

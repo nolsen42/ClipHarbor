@@ -147,8 +147,6 @@
   "{0} · under {1} MB": "{0} · menos de {1} MB",
   "{0} · Best": "{0} · Máxima",
   "No limit": "Sem limite",
-  "50 MB · Nitro Basic or boosted server": "50 MB · Nitro Basic ou servidor impulsionado",
-  "100 MB · server boost level 3": "100 MB · servidor com impulso nível 3",
   "500 MB · Discord Nitro": "500 MB · Discord Nitro",
 
   "Download": "Baixar",
@@ -362,7 +360,8 @@
   "Only part:": "Só um trecho:",
   "Saved in Download/ClipHarbor": "Salvo em Download/ClipHarbor",
   "The end of the part has to come after the start.": "O fim do trecho tem que vir depois do início.",
-  "Make smaller for Discord (20 MB)": "Diminuir para o Discord (20 MB)",
+  "Make smaller for Discord…": "Diminuir para o Discord…",
+  "Make smaller for Discord": "Diminuir para o Discord",
   "This video is already under 20 MB, so it fits on Discord as it is.": "Este vídeo já tem menos de 20 MB, então cabe no Discord do jeito que está.",
   "Delete the file": "Excluir o arquivo",
   "Delete": "Excluir",

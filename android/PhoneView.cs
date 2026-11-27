@@ -362,32 +362,47 @@ public class PhoneView : Grid
     {
         if (it.Status != ItemStatus.Done || !File.Exists(it.FilePath)) return;
         bool isVideo = new[] { ".mp4", ".mkv", ".webm", ".mov", ".m4v" }.Contains(Path.GetExtension(it.FilePath).ToLowerInvariant());
+        var items = new List<(string, Geometry, Action)> { ("Share", Icons.Link, () => AndroidSetup.Share(it.FilePath)) };
+        if (isVideo)
+        {
+            items.Add(("Make a GIF", Icons.Image, () => AddConversion(it, new DownloadOptions { Kind = MediaKind.Animation, Format = "gif", AnimationWidth = 480 }, it.Title)));
+            items.Add(("Make smaller for Discord…", Icons.Video, () => ShowSizeMenu(it)));
+        }
+        items.Add(("Remove from list", Icons.Close, () => { _state.Items.Remove(it); Changed(); }));
+        items.Add(("Delete the file", Icons.Trash, () =>
+        {
+            try { File.Delete(it.FilePath); } catch { }
+            _state.Items.Remove(it);
+            Changed();
+        }));
+        ShowMenu(Lang.Keep(it.Title), items);
+    }
+
+    /// <summary>The sizes Discord allows (the same list as the desktop app), leaving out the ones the video already fits in.</summary>
+    void ShowSizeMenu(DownloadItem it)
+    {
+        long size = File.Exists(it.FilePath) ? new FileInfo(it.FilePath).Length : 0;
+        var items = DownloadOptions.SizeLimits.Where(s => s.mb > 0 && size > (long)s.mb * 1_000_000)
+            .Select(s => (s.label, (Geometry)Icons.Video, (Action)(() =>
+                AddConversion(it, new DownloadOptions { Kind = MediaKind.Video, Format = "mp4", TargetSizeMB = s.mb }, $"{it.Title} ({s.mb} MB)"))))
+            .ToList();
+        if (items.Count == 0) { Banner($"This video is already under {DownloadOptions.SizeLimits[1].mb} MB, so it fits on Discord as it is.", false); return; }
+        ShowMenu("Make smaller for Discord", items);
+    }
+
+    /// <summary>A sheet of full-width buttons from the bottom of the screen, under a title
+    /// (pass a video title through Lang.Keep so it isn't translated).</summary>
+    void ShowMenu(string title, IEnumerable<(string text, Geometry icon, Action act)> items)
+    {
         var panel = new StackPanel { Spacing = 6 };
-        panel.Children.Add(Ui.Title(Lang.Keep(it.Title), new TextBlock { Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) }));
-        void Add(string text, Geometry icon, Action act)
+        panel.Children.Add(Ui.Title(title,new TextBlock { Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) }));
+        foreach (var (text, icon, act) in items)
         {
             var b = Ui.Button(text, icon);
             b.HorizontalAlignment = HorizontalAlignment.Stretch; b.HorizontalContentAlignment = HorizontalAlignment.Left; b.MinHeight = 48;
             b.Click += (_, _) => { _sheet.IsVisible = false; act(); };
             panel.Children.Add(b);
         }
-        Add("Share", Icons.Link, () => AndroidSetup.Share(it.FilePath));
-        if (isVideo)
-        {
-            Add("Make a GIF", Icons.Image, () => AddConversion(it, new DownloadOptions { Kind = MediaKind.Animation, Format = "gif", AnimationWidth = 480 }, it.Title));
-            Add("Make smaller for Discord (20 MB)", Icons.Video, () =>
-            {
-                if (new FileInfo(it.FilePath).Length <= 20_000_000) { Banner("This video is already under 20 MB, so it fits on Discord as it is.", false); return; }
-                AddConversion(it, new DownloadOptions { Kind = MediaKind.Video, Format = "mp4", TargetSizeMB = 20 }, $"{it.Title} (20 MB)");
-            });
-        }
-        Add("Remove from list", Icons.Close, () => { _state.Items.Remove(it); Changed(); });
-        Add("Delete the file", Icons.Trash, () =>
-        {
-            try { File.Delete(it.FilePath); } catch { }
-            _state.Items.Remove(it);
-            Changed();
-        });
         var card = new Border
         {
             CornerRadius = new CornerRadius(16, 16, 0, 0), Padding = new Thickness(14, 18, 14, 22), VerticalAlignment = VerticalAlignment.Bottom, Child = panel,
