@@ -23,6 +23,12 @@ public partial class App : Application
             var state = shot != null ? new AppState() : AppState.Load();
             if (shot != null)
                 foreach (var o in new[] { state.Settings.SmartOptions, state.Settings.LastOptions }) o.Folder = AppState.DefaultFolder();
+            // Light used to be the default, so most people on Light never chose it: move them to System once.
+            if (!state.Settings.ThemeMovedToSystem)
+            {
+                if (state.Settings.Theme == "Light") state.Settings.Theme = "System";
+                state.Settings.ThemeMovedToSystem = true;
+            }
             ApplyTheme(state.Settings.Theme);
             // Screenshot mode stays English unless a test language is given (CLIPHARBOR_LANG).
             Lang.Load(shot != null ? "en" : state.Settings.Language);

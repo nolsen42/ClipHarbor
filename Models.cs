@@ -105,6 +105,8 @@ public class Subscription
 public class AppSettings
 {
     public string Theme { get; set; } = "System";
+    /// <summary>Set once Light (the old default) was moved to System, so a Light chosen afterwards stays.</summary>
+    public bool ThemeMovedToSystem { get; set; }
     /// <summary>Language code (Lang.Choices); "" follows the computer.</summary>
     public string Language { get; set; } = "";
     public int MaxConcurrent { get; set; } = 3;
