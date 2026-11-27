@@ -44,7 +44,7 @@ public class NavBar : Border
         {
             if (it.Header)
             {
-                _stack.Children.Add(new TextBlock { Text = it.Text.ToUpperInvariant(), Classes = { "sub", "small" }, Margin = new Thickness(20, 14, 0, 6) });
+                _stack.Children.Add(new TextBlock { Text = Lang.Upper(it.Text), Classes = { "sub", "small" }, Margin = new Thickness(20, 14, 0, 6) });
                 continue;
             }
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*,Auto") };

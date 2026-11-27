@@ -170,7 +170,7 @@ public class OptionsDialog : Dialog
         browse.Click += async (_, _) =>
         {
             var start = await TryFolder(_folder.Text);
-            var picked = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Choose where downloads are saved", SuggestedStartLocation = start });
+            var picked = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = Lang.T("Choose where downloads are saved"), SuggestedStartLocation = start });
             var path = picked.FirstOrDefault()?.TryGetLocalPath();
             if (path != null) _folder.Text = path;
         };
@@ -197,7 +197,7 @@ public class OptionsDialog : Dialog
         DockPanel.SetDock(btns, Dock.Right);
         bottom.Children.Add(btns);
         if (!Engine.HasFfmpeg && info?.IsDirectFile != true)
-            bottom.Children.Add(new TextBlock { Text = "Tip: install the converter in Settings for 1080p and above,\nMP3 and subtitles inside the video.", Classes = { "sub", "small" }, VerticalAlignment = VerticalAlignment.Center });
+            bottom.Children.Add(new TextBlock { Text = "Tip: install the converter in Settings for 1080p and above,\nMP3 and subtitles inside the video.", Classes = { "sub", "small" }, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 12, 0) });
         root.Children.Add(bottom);
 
         // A direct file link is saved as it is, unless it's turned into a GIF/WebP.
@@ -267,8 +267,8 @@ public class OptionsDialog : Dialog
         else if (i.IsDirectFile) { bits.Add("Direct file link"); if (i.DirectSize > 0) bits.Add(Fmt.Bytes(i.DirectSize)); }
         if (i != null && i.Uploader.Length > 0) bits.Add(i.Uploader);
         if (i != null && i.Duration > 0) bits.Add(Fmt.Duration(i.Duration));
-        var title = new TextBlock { Text = i?.Title ?? heading, Classes = { "title" }, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
-        var meta = new TextBlock { Text = string.Join("  ·  ", bits), Classes = { "sub" }, TextTrimming = TextTrimming.CharacterEllipsis };
+        var title = new TextBlock { Text = i != null ? Lang.Keep(i.Title) : heading, Classes = { "title" }, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
+        var meta = new TextBlock { Text = Lang.Join("  ·  ", bits), Classes = { "sub" }, TextTrimming = TextTrimming.CharacterEllipsis };
         var text = new DockPanel { Margin = new Thickness(16, 2, 0, 2) };
         DockPanel.SetDock(meta, Dock.Bottom);
         text.Children.AddRange(new Control[] { meta, title });
@@ -297,7 +297,7 @@ public class OptionsDialog : Dialog
         _ext.Text = ext.Length > 1 ? ext.ToLowerInvariant() : "";
     }
 
-    static string EntryText(PlaylistEntry e) => e.Duration > 0 ? $"{e.Title}   ({Fmt.Duration(e.Duration)})" : e.Title;
+    static string EntryText(PlaylistEntry e) => Lang.Keep(e.Duration > 0 ? $"{e.Title}   ({Fmt.Duration(e.Duration)})" : e.Title);
 
     void KindChanged()
     {

@@ -585,7 +585,7 @@ public class MainWindow : Window
     async Task InstallEngine(string? retryUrl)
     {
         _bannerBtn.IsVisible = false;
-        var prog = new Progress<(string text, double frac)>(p => { _bannerText.Text = "Installing download engine — " + p.text + (p.frac > 0 && p.frac < 1 ? $"  ({p.frac * 100:0}%)" : ""); });
+        var prog = new Progress<(string text, double frac)>(p => { _bannerText.Text = "Installing download engine — " + Lang.T(p.text) + (p.frac > 0 && p.frac < 1 ? $"  ({p.frac * 100:0}%)" : ""); });
         try
         {
             await Engine.InstallEngineAsync(prog, true, CancellationToken.None);
@@ -711,7 +711,7 @@ public class MainWindow : Window
     {
         IStorageFolder? start = null;
         try { var f = ItemFolder(it); if (Directory.Exists(f)) start = await StorageProvider.TryGetFolderFromPathAsync(f); } catch { }
-        var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Find " + it.Title, SuggestedStartLocation = start });
+        var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = Lang.T("Find {0}", it.Title), SuggestedStartLocation = start });
         var path = picked.FirstOrDefault()?.TryGetLocalPath();
         if (path == null || !File.Exists(path)) return;
         it.FilePath = path;
@@ -862,7 +862,7 @@ public class MainWindow : Window
         if (parts.Count == 0) parts.Add(_state.Items.Count == 0 ? "Ready" : $"{_state.Items.Count(i => i.Status == ItemStatus.Done)} of {_state.Items.Count} downloaded");
         if (!Engine.HasEngine) parts.Add("engine not installed");
         else if (!Engine.HasFfmpeg) parts.Add("converter missing (Settings)");
-        _status.Text = string.Join("   ·   ", parts);
+        _status.Text = Lang.Join("   ·   ", parts);
         App.SetTrayText("ClipHarbor — " + parts[0]);
         if (active.Count > 0) RowView.RefreshAll();
         if (_dirty && _shot == null)
@@ -908,7 +908,7 @@ public class MainWindow : Window
     {
         if (!_state.Settings.NotifyWhenDone || IsActive) return;
         if (_state.Items.Any(i => i.Status is ItemStatus.Downloading or ItemStatus.Queued)) return;
-        Platform.Notify("Downloads finished", it.Title, TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
+        Platform.Notify(Lang.T("Downloads finished"), it.Title, TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
     }
 
     async void OnClosing(object? sender, WindowClosingEventArgs e)

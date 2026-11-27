@@ -32,6 +32,8 @@
   <ItemGroup>
     <AssemblyMetadata Include="UpdateRepo" Value="$(UpdateRepo)" />
     <AvaloniaResource Include="assets\ClipHarbor.ico" />
+    <!-- Translations (Lang.cs). -->
+    <EmbeddedResource Include="assets\lang\*.json" LogicalName="ClipHarbor.lang.%(Filename).json" />
   </ItemGroup>
 
   <ItemGroup>

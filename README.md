@@ -20,7 +20,12 @@ ClipHarbor is free and stays free. If it's useful to you, you can [support it on
 - **Smart Mode**: save your choices once and every link afterwards downloads in one click.
 - **Subscriptions**: follow a channel or playlist and new videos download automatically. ClipHarbor keeps running in the system tray (menu bar on a Mac) after you close the window, so checks keep happening, and it can start hidden when you sign in to your computer.
 - **Download list**: progress, speed and time left. Pause, resume, retry, open the file or show it in its folder. You can search and filter the list.
-- **Settings**: light, dark or system look, how many downloads run at once, speed limit, proxy, file-name template, browser sign-in for private or age-restricted videos, and embedded cover art and metadata.
+- **Settings**: light, dark or system look, how many downloads run at once, connections per download, speed limit, proxy, file-name template, browser sign-in for private or age-restricted videos, and embedded cover art and metadata.
+- **Your language**: English, Spanish, Portuguese (Brazil), Russian, Indonesian and Turkish. ClipHarbor follows your computer's or phone's language, or you can pick one in Settings.
+
+### Help translate
+
+Each language is one file in [`assets/lang`](assets/lang): the English text on the left, the translation on the right. Keep `{0}`, `{1}` and `\n` where they are. To fix a translation or add a language, edit or copy a file and open a pull request (a new language also needs a line in `Lang.Choices` in `Lang.cs`). To see your changes without touching your settings, start ClipHarbor with the `CLIPHARBOR_LANG` environment variable set to the language code, for example `es`.
 
 ![Dark look](docs/screenshot-dark.png)
 

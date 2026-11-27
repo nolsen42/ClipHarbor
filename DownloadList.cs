@@ -172,7 +172,7 @@ public class RowView : Border
         var it = _item;
         if (it == null) return;
         _thumb.Set(it.ThumbnailUrl, it.Options.Kind == MediaKind.Audio, it.DurationSeconds);
-        _title.Text = it.Title.Length > 0 ? it.Title : it.Url;
+        _title.Text = Lang.Keep(it.Title.Length > 0 ? it.Title : it.Url);
 
         var bits = new List<string> { it.Direct ? "File" : it.Options.Describe() };
         if (it.IsClip) bits.Add($"Part {Fmt.Time(it.ClipStart)}–{Fmt.Time(it.ClipEnd)}");
@@ -180,7 +180,7 @@ public class RowView : Border
         if (it.Options.Subtitles && it.Options.Kind == MediaKind.Video) bits.Add("Subtitles");
         if (it.Uploader.Length > 0) bits.Add(it.Uploader);
         if (it.Playlist.Length > 0) bits.Add("▸ " + it.Playlist);
-        _meta.Text = string.Join("  ·  ", bits);
+        _meta.Text = Lang.Join("  ·  ", bits);
 
         bool running = it.Status == ItemStatus.Downloading;
         _bar.IsVisible = running;
@@ -203,7 +203,7 @@ public class RowView : Border
                 if (it.Phase == "audio") parts.Add("audio");
                 if (it.Speed > 0) parts.Add(Fmt.Bytes(it.Speed) + "/s");
                 if (it.Eta > 0) parts.Add(Fmt.Duration(it.Eta) + " left");
-                _status.Text = string.Join("  ·  ", parts);
+                _status.Text = Lang.Join("  ·  ", parts);
             }
         }
         else

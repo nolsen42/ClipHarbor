@@ -105,6 +105,8 @@ public class Subscription
 public class AppSettings
 {
     public string Theme { get; set; } = "Light";
+    /// <summary>Language code (Lang.Choices); "" follows the computer.</summary>
+    public string Language { get; set; } = "";
     public int MaxConcurrent { get; set; } = 3;
     public string SpeedLimit { get; set; } = "";
     /// <summary>Pieces downloaded at once for each download, on sites that send video in pieces (yt-dlp -N).</summary>

@@ -24,6 +24,9 @@ public partial class App : Application
             if (shot != null)
                 foreach (var o in new[] { state.Settings.SmartOptions, state.Settings.LastOptions }) o.Folder = AppState.DefaultFolder();
             ApplyTheme(state.Settings.Theme);
+            // Screenshot mode stays English unless a test language is given (CLIPHARBOR_LANG).
+            Lang.Load(shot != null ? "en" : state.Settings.Language);
+            Lang.Install();
 
             // The window decides itself when the app ends (Quit), so hiding it to the tray keeps the app running.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -98,7 +101,7 @@ public partial class App : Application
     /// <summary>Short status shown when hovering the tray icon.</summary>
     public static void SetTrayText(string text)
     {
-        if (Current is App { _tray: { } t }) t.ToolTipText = text.Length > 120 ? text[..120] : text;
+        if (Current is App { _tray: { } t }) { text = Lang.T(text); t.ToolTipText = text.Length > 120 ? text[..120] : text; }
     }
 
     public static void ApplyTheme(string name)

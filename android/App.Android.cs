@@ -8,7 +8,12 @@ namespace ClipHarbor;
 /// <summary>The Android side of App.axaml (shared colours and styles): one phone screen instead of windows and a tray.</summary>
 public partial class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        Lang.Load(null); // the phone's language
+        Lang.Install();
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {

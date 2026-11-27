@@ -9,6 +9,7 @@ public class SettingsDialog : Dialog
 {
     readonly AppSettings _s;
     readonly ComboBox _theme = new() { Width = 160, ItemsSource = new[] { "Light", "Dark", "System" } };
+    readonly ComboBox _language = new() { Width = 200, ItemsSource = Lang.Choices.Select(c => c.name).ToArray() };
     readonly NumericUpDown _parallel = new() { Minimum = 1, Maximum = 32, Width = 120, FormatString = "0", Increment = 1 };
     readonly TextBox _template = new() { Width = 300 };
     readonly CheckBox _skip = new() { Content = "Skip files that are already downloaded" };
@@ -60,9 +61,10 @@ public class SettingsDialog : Dialog
         {
             var g = new Grid { ColumnDefinitions = new ColumnDefinitions($"{C},Auto,*"), Margin = new Thickness(0, 0, 0, 10) };
             var l = Ui.Text(label);
+            l.TextWrapping = TextWrapping.Wrap; l.Margin = new Thickness(0, 0, 8, 0); // translations can be longer than the English
             Grid.SetColumn(c, 1);
             g.Children.AddRange(new Control[] { l, c });
-            if (hint != null) { var h = Ui.Text(hint, "sub"); h.Margin = new Thickness(10, 0, 0, 0); Grid.SetColumn(h, 2); g.Children.Add(h); }
+            if (hint != null) { var h = Ui.Text(hint, "sub"); h.TextWrapping = TextWrapping.Wrap; h.Margin = new Thickness(10, 0, 0, 0); Grid.SetColumn(h, 2); g.Children.Add(h); }
             root.Children.Add(g);
         }
         void Check(CheckBox c) { c.Margin = new Thickness(C, 0, 0, 4); root.Children.Add(c); }
@@ -74,6 +76,8 @@ public class SettingsDialog : Dialog
         _theme.SelectionChanged += (_, _) => App.ApplyTheme(_theme.SelectedItem?.ToString() ?? "Light");
         Closed += (_, _) => App.ApplyTheme(_s.Theme);
         Row("Look", _theme);
+        _language.SelectedIndex = Math.Max(0, Array.FindIndex(Lang.Choices, c => c.code == (s.Language ?? "")));
+        Row("Language", _language, "after restarting ClipHarbor");
         _parallel.Value = Math.Clamp(s.MaxConcurrent, 1, 32);
         Row("Downloads at the same time", _parallel, "no cap");
         _template.Text = s.FileNameTemplate;
@@ -137,7 +141,7 @@ public class SettingsDialog : Dialog
         _autoInstall.IsChecked = s.InstallAppUpdates;
         if (Platform.IsFlatpak)
         {
-            _appStatus.Text += ". Updates come through your software center.";
+            _appStatus.Text = $"Version {Updater.CurrentText}. Updates come through your software center.";
             root.Children.Add(_appStatus);
         }
         else AddUpdateControls();
@@ -198,7 +202,7 @@ public class SettingsDialog : Dialog
         _install.Content = f == null ? "Add converter" : "Reinstall";
         _engineStatus.Text = "Engine ready" + (f == null ? " — converter (ffmpeg) missing: 1080p+ and MP3 need it." : " with converter.");
         var v = await Engine.EngineVersionAsync();
-        if (v.Length > 0) _engineStatus.Text += $"  Version {v}.";
+        if (v.Length > 0) _engineStatus.Text = Lang.T(Engine.Ffmpeg == null ? "Engine ready — converter (ffmpeg) missing: 1080p+ and MP3 need it." : "Engine ready with converter.") + "  " + Lang.T("Version {0}.", v);
     }
 
     async Task Install()
@@ -246,6 +250,7 @@ public class SettingsDialog : Dialog
     void Save()
     {
         _s.Theme = _theme.SelectedItem?.ToString() ?? "Light";
+        _s.Language = Lang.Choices[Math.Max(0, _language.SelectedIndex)].code;
         _s.MaxConcurrent = (int)(_parallel.Value ?? 3);
         _s.Connections = (int)(_connections.Value ?? 4);
         _s.FileNameTemplate = string.IsNullOrWhiteSpace(_template.Text) ? "%(title)s.%(ext)s" : _template.Text.Trim();

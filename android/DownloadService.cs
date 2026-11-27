@@ -18,7 +18,7 @@ public class DownloadService : Service
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
-        var text = intent?.GetStringExtra(ExtraText) ?? "Downloading…";
+        var text = intent?.GetStringExtra(ExtraText) ?? Lang.T("Downloading…");
         var n = Build(this, text);
         if (OperatingSystem.IsAndroidVersionAtLeast(29)) StartForeground(NotificationId, n, ForegroundService.TypeDataSync);
         else StartForeground(NotificationId, n);

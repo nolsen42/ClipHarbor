@@ -238,11 +238,11 @@ public class PhoneView : Grid
 
         var thumb = new Thumbs.View(120, 68);
         thumb.Set(info.Thumbnail, false, info.Duration);
-        var sub = info.IsPlaylist ? $"Playlist · {info.Entries.Count} videos" : string.Join("  ·  ", new[] { info.Uploader, Fmt.Duration(info.Duration) }.Where(s => s.Length > 0));
+        var sub = info.IsPlaylist ? $"Playlist · {info.Entries.Count} videos" : Lang.Join("  ·  ", new[] { info.Uploader, Fmt.Duration(info.Duration) }.Where(s => s.Length > 0));
         var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         var text = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0), Children =
         {
-            new TextBlock { Text = info.Title, Classes = { "bold" }, TextWrapping = TextWrapping.Wrap, MaxLines = 3, TextTrimming = TextTrimming.CharacterEllipsis },
+            new TextBlock { Text = Lang.Keep(info.Title), Classes = { "bold" }, TextWrapping = TextWrapping.Wrap, MaxLines = 3, TextTrimming = TextTrimming.CharacterEllipsis },
             Ui.Text(sub, "sub", "small"),
         } };
         Grid.SetColumn(text, 1);
@@ -340,7 +340,7 @@ public class PhoneView : Grid
         if (it.Status != ItemStatus.Done || !File.Exists(it.FilePath)) return;
         bool isVideo = new[] { ".mp4", ".mkv", ".webm", ".mov", ".m4v" }.Contains(Path.GetExtension(it.FilePath).ToLowerInvariant());
         var panel = new StackPanel { Spacing = 6 };
-        panel.Children.Add(new TextBlock { Text = it.Title, Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) });
+        panel.Children.Add(new TextBlock { Text = Lang.Keep(it.Title), Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) });
         void Add(string text, Geometry icon, Action act)
         {
             var b = Ui.Button(text, icon);
@@ -422,8 +422,8 @@ public class PhoneView : Grid
         if (_running.Count > 0) RowView.RefreshAll();
         // While anything runs, a foreground service keeps the app alive in the background.
         var busy = _running.Count == 0 ? null
-            : _running.Count == 1 ? "Downloading " + (_state.Items.FirstOrDefault(i => i.Status == ItemStatus.Downloading)?.Title ?? "")
-            : $"Downloading {_running.Count} items";
+            : _running.Count == 1 ? Lang.T("Downloading {0}", _state.Items.FirstOrDefault(i => i.Status == ItemStatus.Downloading)?.Title ?? "")
+            : Lang.T("Downloading {0} items", _running.Count);
         if (busy != _busyText) { _busyText = busy; DownloadService.Update(AndroidSetup.App, busy); }
         if (_dirty)
         {
@@ -456,7 +456,7 @@ public class PhoneView : Grid
                     it.Status = ItemStatus.Done; it.Progress = 1; it.Speed = 0; it.Phase = "";
                     if (File.Exists(it.FilePath)) AndroidSetup.Scan(it.FilePath);
                     if (_state.Settings.NotifyWhenDone && !_state.Items.Any(i => i.Status is ItemStatus.Downloading or ItemStatus.Queued))
-                        Platform.Notify("Downloads finished", it.Title, IntPtr.Zero);
+                        Platform.Notify(Lang.T("Downloads finished"), it.Title, IntPtr.Zero);
                 }
                 Changed();
             });

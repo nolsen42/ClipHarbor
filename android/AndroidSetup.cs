@@ -28,8 +28,8 @@ public static class AndroidSetup
         if (OperatingSystem.IsAndroidVersionAtLeast(26))
         {
             var nm = (NotificationManager)App.GetSystemService(Context.NotificationService)!;
-            nm.CreateNotificationChannel(new NotificationChannel(Channel, "Finished downloads", NotificationImportance.Default));
-            nm.CreateNotificationChannel(new NotificationChannel(DownloadService.Channel, "Downloads in progress", NotificationImportance.Low));
+            nm.CreateNotificationChannel(new NotificationChannel(Channel, Lang.T("Finished downloads"), NotificationImportance.Default));
+            nm.CreateNotificationChannel(new NotificationChannel(DownloadService.Channel, Lang.T("Downloads in progress"), NotificationImportance.Low));
         }
         if (OperatingSystem.IsAndroidVersionAtLeast(33) && ContextCompat.CheckSelfPermission(activity, "android.permission.POST_NOTIFICATIONS") != Android.Content.PM.Permission.Granted)
             activity.RequestPermissions(new[] { "android.permission.POST_NOTIFICATIONS" }, 1);
@@ -55,7 +55,7 @@ public static class AndroidSetup
                 intent.AddFlags(ActivityFlags.GrantReadUriPermission);
             }
             intent.AddFlags(ActivityFlags.NewTask);
-            App.StartActivity(Intent.CreateChooser(intent, "Open with")!.AddFlags(ActivityFlags.NewTask));
+            App.StartActivity(Intent.CreateChooser(intent, Lang.T("Open with"))!.AddFlags(ActivityFlags.NewTask));
         }
         catch { }
     }

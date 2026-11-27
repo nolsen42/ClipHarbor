@@ -55,7 +55,7 @@ public class SubscriptionsView : DockPanel
             g.DataContextChanged += (_, _) =>
             {
                 if (g.DataContext is not Subscription s) return;
-                ((TextBlock)g.Children[0]).Text = s.Name.Length > 0 ? s.Name : s.Url;
+                ((TextBlock)g.Children[0]).Text = Lang.Keep(s.Name.Length > 0 ? s.Name : s.Url);
                 ((TextBlock)g.Children[1]).Text = s.Options.Describe();
                 ((TextBlock)g.Children[2]).Text = s.LastChecked == default ? "Never" : Fmt.When(s.LastChecked);
                 ((TextBlock)g.Children[3]).Text = s.LastResult;
@@ -166,7 +166,7 @@ public class SubscriptionsView : DockPanel
                     var fresh = info.Entries.Where(e => !s.Seen.Contains(e.Id)).ToList();
                     foreach (var e in fresh) s.Seen.Add(e.Id);
                     if (fresh.Count > 0) _main.Queue(info, s.Options, fresh, s.Name);
-                    s.LastResult = fresh.Count > 0 ? $"{fresh.Count} new video{(fresh.Count == 1 ? "" : "s")} added" : "Up to date";
+                    s.LastResult = fresh.Count == 1 ? "1 new video added" : fresh.Count > 0 ? $"{fresh.Count} new videos added" : "Up to date";
                 }
                 catch (Exception ex) { s.LastResult = "Problem: " + ex.Message; }
                 s.LastChecked = DateTime.Now;
