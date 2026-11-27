@@ -26,7 +26,27 @@ public class MainActivity : AvaloniaMainActivity<App>
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        SystemBars();
         HandleShare(Intent);
+    }
+
+    public override void OnConfigurationChanged(Android.Content.Res.Configuration newConfig)
+    {
+        base.OnConfigurationChanged(newConfig);
+        SystemBars(); // the phone switched between light and dark
+    }
+
+    /// <summary>The 3-button navigation bar otherwise stays a light strip with dark buttons, even in dark mode:
+    /// let the app's background show through, with buttons that suit the phone's light or dark setting.</summary>
+    void SystemBars()
+    {
+        if (Window is not { } w) return;
+        bool dark = ((Resources?.Configuration?.UiMode ?? 0) & Android.Content.Res.UiMode.NightMask) == Android.Content.Res.UiMode.NightYes;
+        w.SetNavigationBarColor(Android.Graphics.Color.Transparent);
+        if (OperatingSystem.IsAndroidVersionAtLeast(29)) w.NavigationBarContrastEnforced = false;
+        var bars = AndroidX.Core.View.WindowCompat.GetInsetsController(w, w.DecorView);
+        bars.AppearanceLightNavigationBars = !dark;
+        bars.AppearanceLightStatusBars = !dark;
     }
 
     protected override void OnNewIntent(Intent? intent)
