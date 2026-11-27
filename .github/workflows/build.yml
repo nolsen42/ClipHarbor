@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: "Publish a release? patch = fixes (1.1.0 → 1.1.1), minor = new features (1.1.1 → 1.2.0), major = big changes (1.2.0 → 2.0.0)"
+        description: "Publish a release? patch = fixes (1.1.0 → 1.1.1), minor = new features (1.1.1 → 1.2.0), major = big changes (1.2.0 → 2.0.0). flatpak = only (re)publish the Flatpak for the latest release."
         type: choice
-        options: ["no", "patch", "minor", "major"]
+        options: ["no", "patch", "minor", "major", "flatpak"]
         default: "no"
 
 jobs:
@@ -26,6 +26,7 @@ jobs:
       release: ${{ steps.v.outputs.release }}
       new_release: ${{ steps.v.outputs.new_release }}
       skip: ${{ steps.v.outputs.skip }}
+      flatpak_only: ${{ steps.v.outputs.flatpak_only }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -37,13 +38,18 @@ jobs:
           BUMP: ${{ github.event.inputs.release }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          release=false; new=false; skip=false
+          release=false; new=false; skip=false; flatpak_only=false
           if [ -n "$TAG" ]; then
             # A release published by hand on GitHub: its tag is the version (v1.2.0 -> 1.2.0).
             v="${TAG#[vV]}"; release=true
             # A release made by the Run workflow button already has its files; building again isn't needed.
             n=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets | length' 2>/dev/null || echo 0)
             if [ "${n:-0}" -gt 0 ]; then echo "$TAG already has its files; nothing to do."; release=false; skip=true; fi
+          elif [ "$BUMP" = "flatpak" ]; then
+            # Only the Flatpak, built from the latest release's tag; nothing else is built or released.
+            TAG=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+            v="${TAG#v}"; skip=true; flatpak_only=true
+            echo "Flatpak for $TAG"
           elif [ -n "$BUMP" ] && [ "$BUMP" != "no" ]; then
             last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
             last="${last#v}"; last="${last%%-*}"; [ -z "$last" ] && last=0.0.0
@@ -63,7 +69,7 @@ jobs:
             [ -z "$v" ] && v=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' ClipHarbor.csproj)
           fi
           echo "Version: $v"
-          { echo "version=$v"; echo "tag=$TAG"; echo "release=$release"; echo "new_release=$new"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
+          { echo "version=$v"; echo "tag=$TAG"; echo "release=$release"; echo "new_release=$new"; echo "skip=$skip"; echo "flatpak_only=$flatpak_only"; } >> "$GITHUB_OUTPUT"
 
   build:
     needs: plan
@@ -337,7 +343,7 @@ jobs:
   # source, so the first run takes a while; later runs reuse the build cache.
   flatpak:
     needs: plan
-    if: needs.plan.outputs.release == 'true'
+    if: needs.plan.outputs.release == 'true' || needs.plan.outputs.flatpak_only == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -349,6 +355,9 @@ jobs:
       VERSION: ${{ needs.plan.outputs.version }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Flatpak only: the app as it was released, not newer unreleased changes.
+          ref: ${{ needs.plan.outputs.flatpak_only == 'true' && needs.plan.outputs.tag || '' }}
 
       - name: Install Flatpak tools
         run: |
@@ -443,7 +452,7 @@ jobs:
   # The repository is also attached to the release, so a website-only update can publish it again.
   flatpak-publish:
     needs: [plan, flatpak, release]
-    if: always() && needs.release.result == 'success' && needs.flatpak.result == 'success'
+    if: always() && needs.flatpak.result == 'success' && (needs.release.result == 'success' || needs.plan.outputs.flatpak_only == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: write
