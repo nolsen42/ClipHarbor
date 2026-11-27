@@ -470,6 +470,7 @@ jobs:
           echo "$GPG_KEY" | gpg --batch --import
           key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
           app=io.github.nolsen42.ClipHarbor
+          mkdir -p site/repo
           ostree init --mode=archive-z2 --repo=site/repo
           for a in x86_64 aarch64; do
             mkdir -p parts/$a && tar -xf parts/flatpak-$a.tar -C parts/$a
