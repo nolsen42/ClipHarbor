@@ -22,20 +22,31 @@ public class NavBar : Border
     public string SelectedKey = "all";
     public event Action<string>? Selected;
     readonly StackPanel _stack = new() { Margin = new Thickness(0, 10, 0, 0) };
-    readonly TextBlock _footer = new() { Classes = { "sub", "small" }, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(20, 0, 16, 14) };
+    readonly TextBlock _footerTop = new() { Classes = { "sub", "small" }, TextTrimming = TextTrimming.CharacterEllipsis };
+    readonly TextBlock _footerBottom = new() { Classes = { "sub", "small" }, TextTrimming = TextTrimming.CharacterEllipsis };
+    /// <summary>The version lines at the bottom were clicked.</summary>
+    public event Action? FooterClicked;
 
     public NavBar()
     {
         Classes.Add("sidebar");
         Width = 220;
         var dock = new DockPanel();
-        DockPanel.SetDock(_footer, Dock.Bottom);
-        dock.Children.Add(_footer);
+        var footer = new Border
+        {
+            Background = Brushes.Transparent, Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+            Padding = new Thickness(20, 8, 16, 14),
+            Child = new StackPanel { Spacing = 2, Children = { _footerTop, _footerBottom } },
+        };
+        ToolTip.SetTip(footer, "Settings");
+        footer.PointerPressed += (_, _) => FooterClicked?.Invoke();
+        DockPanel.SetDock(footer, Dock.Bottom);
+        dock.Children.Add(footer);
         dock.Children.Add(new ScrollViewer { Content = _stack, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled });
         Child = dock;
     }
 
-    public string Footer { set => _footer.Text = value; }
+    public void SetFooter(string top, string bottom) { _footerTop.Text = top; _footerBottom.Text = bottom; }
 
     public void Build()
     {

@@ -134,6 +134,7 @@ public class MainWindow : Window
         }
         finally { _engineUpdating = false; }
         if (v != null && !_banner.IsVisible) ShowBanner($"The download engine was updated to {v}.", null, null);
+        if (v != null) _ = RefreshFooter();
     }
 
     // ---------------- app updates ----------------
@@ -334,7 +335,8 @@ public class MainWindow : Window
             new NavItem { Header = true, Text = "Follow" },
             new NavItem { Key = "subs", Text = "Subscriptions", Glyph = Icons.Star },
         });
-        _nav.Footer = "Free and unlimited: no download caps, no playlist limits, no sign-up.";
+        _nav.FooterClicked += async () => await OpenSettings();
+        _ = RefreshFooter();
         _nav.Build();
         _nav.Selected += Navigate;
 
@@ -590,12 +592,22 @@ public class MainWindow : Window
         {
             await Engine.InstallEngineAsync(prog, true, CancellationToken.None);
             ShowBanner("Download engine installed. You're all set.", null, null);
+            _ = RefreshFooter();
             if (retryUrl != null) await AnalyzeAndQueue(retryUrl, _state.Settings.SmartMode ? _state.Settings.SmartOptions : null, _state.Settings.SmartMode);
         }
         catch (Exception ex)
         {
             ShowBanner("Couldn't install the engine: " + ex.Message, "Try again", () => _ = InstallEngine(retryUrl), true);
         }
+    }
+
+    /// <summary>The ClipHarbor and engine versions at the bottom of the sidebar.</summary>
+    async Task RefreshFooter()
+    {
+        var app = "ClipHarbor " + Updater.CurrentText;
+        if (!Engine.HasEngine) { _nav.SetFooter(app, "Download engine not installed"); return; }
+        var v = await Engine.EngineVersionAsync();
+        _nav.SetFooter(app, v.Length > 0 ? Lang.T("Download engine: {0}", v) : "Download engine");
     }
 
     void CheckEngineBanner()
@@ -634,6 +646,7 @@ public class MainWindow : Window
 
     async Task AfterSettings(SettingsDialog d, bool ok)
     {
+        _ = RefreshFooter(); // the engine may have been installed or updated there
         if (ok)
         {
             App.ApplyTheme(_state.Settings.Theme);
