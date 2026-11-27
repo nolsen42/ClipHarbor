@@ -9,7 +9,7 @@ using Avalonia.VisualTree;
 
 namespace ClipHarbor;
 
-public enum RowAction { None, Primary, Folder, Remove, Fix }
+public enum RowAction { None, Primary, Folder, Remove, Fix, More }
 
 /// <summary>Scrollable list of downloads, with an empty-state message.</summary>
 public class DownloadList : Panel
@@ -116,6 +116,8 @@ public class RowView : Border
     readonly Button _primary = Ui.IconButton(Icons.Pause, "Pause");
     readonly Button _folder = Ui.IconButton(Icons.Folder, "Show in folder");
     readonly Button _remove = Ui.IconButton(Icons.Close, "Remove from list");
+    /// <summary>Phone only, on finished downloads: the menu that a long-press also opens (share, GIF, smaller, delete).</summary>
+    readonly Button _more = Ui.IconButton(Icons.More, "More");
     readonly Button _fix = new() { Content = "Open Settings", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0), IsVisible = false };
     DownloadItem? _item;
 
@@ -145,10 +147,12 @@ public class RowView : Border
         statusRow.Children.Add(_status);
 
         var text = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14, 0, 12, 0), Children = { _title, _meta, statusRow } };
-        foreach (var b in new[] { _primary, _folder, _remove }) { b.Classes.Add("row"); ((Icon)b.Content!).Width = ((Icon)b.Content!).Height = 18; }
+        foreach (var b in new[] { _primary, _folder, _remove, _more }) { b.Classes.Add("row"); ((Icon)b.Content!).Width = ((Icon)b.Content!).Height = 18; }
+        ((Icon)_more.Content!).Stroke = 3.2; // dots, not hairlines
+        _more.IsVisible = false;
         _remove.Classes.Add("danger");
         _remove.Margin = new Thickness(6, 0, 0, 0); // a little apart, so it's not hit instead of the folder
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { _fix, _primary, _folder, _remove } };
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { _fix, _primary, _folder, _remove, _more } };
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
         grid.Children.Add(_thumb);
@@ -160,6 +164,7 @@ public class RowView : Border
         _folder.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Folder); };
         _remove.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Remove); };
         _fix.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Fix); };
+        _more.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.More); };
         ToolTip.SetTip(_folder, DownloadList.Tooltip(new DownloadItem(), RowAction.Folder));
     }
 
@@ -180,7 +185,7 @@ public class RowView : Border
         var it = _item;
         if (it == null) return;
         _thumb.Set(it.ThumbnailUrl, it.Options.Kind == MediaKind.Audio, it.DurationSeconds);
-        _title.Text = Lang.Keep(it.Title.Length > 0 ? it.Title : it.Url);
+        Ui.SetTitle(_title, Lang.Keep(it.Title.Length > 0 ? it.Title : it.Url));
 
         var bits = new List<string> { it.Direct ? "File" : it.Options.Describe() };
         if (it.IsClip) bits.Add($"Part {Fmt.Time(it.ClipStart)}–{Fmt.Time(it.ClipEnd)}");
@@ -231,6 +236,9 @@ public class RowView : Border
         }
         ToolTip.SetTip(_status, it.Status == ItemStatus.Failed ? it.Message : null);
         _fix.IsVisible = !Compact && DownloadList.FixInSettings(it);
+        // Phone: a finished download gets "⋯" (its menu has Remove from list) in place of ✕.
+        _more.IsVisible = Compact && it.Status == ItemStatus.Done;
+        _remove.IsVisible = !_more.IsVisible;
 
         ((Icon)_primary.Content!).Data = it.Status switch
         {

@@ -36,6 +36,7 @@ public static class Icons
     public static readonly Geometry Plus = G("M12 5v14 M5 12h14");
     public static readonly Geometry Edit = G("M4.5 19.5h4l10-10-4-4-10 10z M13 7l4 4");
     public static readonly Geometry Clear = Trash;
+    public static readonly Geometry More = G("M5.5 12h.01 M12 12h.01 M18.5 12h.01");
 }
 
 /// <summary>A line icon that takes its colour from the text around it.</summary>
@@ -211,6 +212,55 @@ public static class Ui
         ToolTip.SetTip(b, tip);
         return b;
     }
+
+    /// <summary>Sets a title that may contain emoji. Colour emoji fonts have no bold, and the bold Avalonia
+    /// makes up for them comes out as empty boxes on Android, so emoji keep the normal weight.</summary>
+    public static void SetTitle(TextBlock tb, string text)
+    {
+        if (!HasEmoji(text)) { tb.Inlines = null; tb.Text = text; return; }
+        var inlines = new InlineCollection();
+        var sb = new System.Text.StringBuilder();
+        bool inEmoji = false;
+        void Flush()
+        {
+            if (sb.Length == 0) return;
+            var run = new Run(sb.ToString());
+            if (inEmoji) run.FontWeight = FontWeight.Normal;
+            inlines.Add(run);
+            sb.Clear();
+        }
+        for (int i = 0; i < text.Length;)
+        {
+            int len = char.IsSurrogatePair(text, i) ? 2 : 1;
+            int cp = len == 2 ? char.ConvertToUtf32(text, i) : text[i];
+            // Joiners and variation selectors belong to the emoji they're attached to.
+            bool emoji = IsEmoji(cp) || (inEmoji && (cp is 0x200D or 0xFE0F or 0x20E3 || cp is >= 0x1F3FB and <= 0x1F3FF || cp is >= 0xE0020 and <= 0xE007F));
+            if (emoji != inEmoji) { Flush(); inEmoji = emoji; }
+            sb.Append(text, i, len);
+            i += len;
+        }
+        Flush();
+        tb.Text = null;
+        tb.Inlines = inlines;
+    }
+
+    /// <summary><see cref="SetTitle"/> on a new TextBlock, for use inside initializers.</summary>
+    public static TextBlock Title(string text, TextBlock tb) { SetTitle(tb, text); return tb; }
+
+    static bool HasEmoji(string s)
+    {
+        for (int i = 0; i < s.Length; i++)
+            if (char.IsSurrogatePair(s, i) ? IsEmoji(char.ConvertToUtf32(s, i)) : IsEmoji(s[i])) return true;
+        return false;
+    }
+
+    static bool IsEmoji(int cp) =>
+        cp is >= 0x1F000 and <= 0x1FAFF   // pictographs, faces, flags (regional indicators), ...
+        || cp is >= 0x2600 and <= 0x27BF  // ☀ ✂ ❤ and other symbols
+        || cp is >= 0x2B00 and <= 0x2BFF  // ⭐ ⬛
+        || cp is >= 0x2190 and <= 0x21FF  // arrows
+        || cp is 0x203C or 0x2049 or 0x2122 or 0x2139 or 0x231A or 0x231B or 0x2328 or 0x23CF
+        || cp is >= 0x23E9 and <= 0x23FA || cp is 0x24C2 or 0x3030 or 0x303D or 0x3297 or 0x3299 or 0xA9 or 0xAE;
 
     public static KeyModifiers CommandKey(TopLevel? t) =>
         t?.PlatformSettings?.HotkeyConfiguration.CommandModifiers ?? (Platform.IsMac ? KeyModifiers.Meta : KeyModifiers.Control);

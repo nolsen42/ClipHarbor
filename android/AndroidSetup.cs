@@ -47,7 +47,7 @@ public static class AndroidSetup
                 intent = new Intent(Intent.ActionView, Android.Net.Uri.Parse(target));
             else
             {
-                var uri = FileProvider.GetUriForFile(App, "io.github.clipharbor.files", new Java.IO.File(target));
+                var uri = FileProvider.GetUriForFile(App, App.PackageName + ".files", new Java.IO.File(target));
                 var ext = Path.GetExtension(target).TrimStart('.').ToLowerInvariant();
                 var type = MimeTypeMap.Singleton?.GetMimeTypeFromExtension(ext) ?? "*/*";
                 intent = new Intent(Intent.ActionView);
@@ -72,7 +72,7 @@ public static class AndroidSetup
                 App.StartActivity(allow.AddFlags(ActivityFlags.NewTask));
                 return false;
             }
-            var uri = FileProvider.GetUriForFile(App, "io.github.clipharbor.files", new Java.IO.File(path));
+            var uri = FileProvider.GetUriForFile(App, App.PackageName + ".files", new Java.IO.File(path));
             var install = new Intent(Intent.ActionView);
             install.SetDataAndType(uri, "application/vnd.android.package-archive");
             install.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.NewTask);
@@ -87,7 +87,7 @@ public static class AndroidSetup
     {
         try
         {
-            var uri = FileProvider.GetUriForFile(App, "io.github.clipharbor.files", new Java.IO.File(path));
+            var uri = FileProvider.GetUriForFile(App, App.PackageName + ".files", new Java.IO.File(path));
             var ext = Path.GetExtension(path).TrimStart('.').ToLowerInvariant();
             var send = new Intent(Intent.ActionSend);
             send.SetType(MimeTypeMap.Singleton?.GetMimeTypeFromExtension(ext) ?? "*/*");

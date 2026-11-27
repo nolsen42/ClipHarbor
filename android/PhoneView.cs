@@ -55,8 +55,21 @@ public class PhoneView : Grid
         Grid.SetColumn(paste, 1); Grid.SetColumn(go, 2);
         input.Children.AddRange(new Control[] { _link, paste, go });
 
-        _banner.Child = _bannerText;
-        _banner.Tapped += (_, _) => { var a = _bannerAction; _banner.IsVisible = false; a?.Invoke(); };
+        var bannerClose = Ui.IconButton(Icons.Close, "Close");
+        bannerClose.Width = bannerClose.Height = 32;
+        bannerClose.Margin = new Thickness(8, -4, -6, -4);
+        bannerClose.VerticalAlignment = VerticalAlignment.Center;
+        bannerClose.Click += (_, e) => { e.Handled = true; _banner.IsVisible = false; };
+        var bannerGrid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        Grid.SetColumn(bannerClose, 1);
+        bannerGrid.Children.AddRange(new Control[] { _bannerText, bannerClose });
+        _banner.Child = bannerGrid;
+        _banner.Tapped += (_, e) =>
+        {
+            if (e.Source is Visual v && v.FindAncestorOfType<Button>(true) != null) return;
+            var a = _bannerAction; _banner.IsVisible = false; a?.Invoke();
+        };
+        _bannerTimer.Tick += (_, _) => { _bannerTimer.Stop(); _banner.IsVisible = false; };
 
         // Downloads
         _list.Source = _state.Items;
@@ -107,6 +120,8 @@ public class PhoneView : Grid
             double kb = keyboard?.State == Avalonia.Controls.Platform.InputPaneState.Open ? keyboard.OccludedRect.Height : 0;
             _sheet.Padding = new Thickness(safe.Left, safe.Top, safe.Right, Math.Max(safe.Bottom, kb));
         }
+        // Back closes an open sheet (choices or the download's menu) before it leaves the app.
+        top.BackRequested += (_, b) => { if (_sheet.IsVisible) { _sheet.IsVisible = false; b.Handled = true; } };
         insets.SafeAreaChanged += (_, _) => Apply();
         if (keyboard != null) keyboard.StateChanged += (_, _) => Apply();
         Apply();
@@ -147,7 +162,7 @@ public class PhoneView : Grid
         Directory.CreateDirectory(dir);
         foreach (var old in Directory.EnumerateFiles(dir)) try { File.Delete(old); } catch { }
         var apk = Path.Combine(dir, "ClipHarbor.apk");
-        var prog = new Progress<(string text, double frac)>(p => Banner(p.text + (p.frac > 0 && p.frac < 1 ? $"  ({p.frac * 100:0}%)" : ""), false));
+        var prog = new Progress<(string text, double frac)>(p => Banner(p.text + (p.frac > 0 && p.frac < 1 ? $"  ({p.frac * 100:0}%)" : ""), false, stay: true));
         try { await Updater.DownloadAsync(u, apk, prog, CancellationToken.None); }
         catch (Exception ex) { Banner("Couldn't download the update: " + ex.Message, true, () => _ = UpdateApp(u)); return; }
         if (AndroidSetup.InstallApk(apk)) _banner.IsVisible = false;
@@ -155,14 +170,22 @@ public class PhoneView : Grid
     }
 
     Action? _bannerAction;
+    readonly DispatcherTimer _bannerTimer = new();
 
-    /// <summary>A message under the link box. Tapping it closes it, or runs <paramref name="onTap"/>.</summary>
-    void Banner(string text, bool warn, Action? onTap = null)
+    /// <summary>A message under the link box. Tapping it closes it, or runs <paramref name="onTap"/>; ✕ closes it.
+    /// Plain messages go away by themselves after a while; ones with an action, or <paramref name="stay"/> (work in progress), wait.</summary>
+    void Banner(string text, bool warn, Action? onTap = null, bool stay = false)
     {
         _bannerAction = onTap;
         _bannerText.Text = text;
         _banner.Classes.Set("warn", warn);
         _banner.IsVisible = true;
+        _bannerTimer.Stop();
+        if (onTap == null && !stay)
+        {
+            _bannerTimer.Interval = TimeSpan.FromSeconds(warn ? 12 : 6);
+            _bannerTimer.Start();
+        }
     }
 
     async Task Analyze(string text)
@@ -171,7 +194,7 @@ public class PhoneView : Grid
         if (url.Length == 0) { Banner("That doesn't look like a link. Copy the address of a video and try again.", true); return; }
         _analyzeCts?.Cancel();
         var cts = _analyzeCts = new CancellationTokenSource();
-        Banner("Looking at the link…", false);
+        Banner("Looking at the link…", false, stay: true);
         LinkInfo info;
         try { info = await Engine.AnalyzeAsync(url, cts.Token); }
         catch (OperationCanceledException) { return; }
@@ -242,7 +265,7 @@ public class PhoneView : Grid
         var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         var text = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0), Children =
         {
-            new TextBlock { Text = Lang.Keep(info.Title), Classes = { "bold" }, TextWrapping = TextWrapping.Wrap, MaxLines = 3, TextTrimming = TextTrimming.CharacterEllipsis },
+            Ui.Title(Lang.Keep(info.Title), new TextBlock { Classes = { "bold" }, TextWrapping = TextWrapping.Wrap, MaxLines = 3, TextTrimming = TextTrimming.CharacterEllipsis }),
             Ui.Text(sub, "sub", "small"),
         } };
         Grid.SetColumn(text, 1);
@@ -340,7 +363,7 @@ public class PhoneView : Grid
         if (it.Status != ItemStatus.Done || !File.Exists(it.FilePath)) return;
         bool isVideo = new[] { ".mp4", ".mkv", ".webm", ".mov", ".m4v" }.Contains(Path.GetExtension(it.FilePath).ToLowerInvariant());
         var panel = new StackPanel { Spacing = 6 };
-        panel.Children.Add(new TextBlock { Text = Lang.Keep(it.Title), Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) });
+        panel.Children.Add(Ui.Title(Lang.Keep(it.Title), new TextBlock { Classes = { "bold" }, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(4, 0, 4, 8) }));
         void Add(string text, Geometry icon, Action act)
         {
             var b = Ui.Button(text, icon);
@@ -358,6 +381,7 @@ public class PhoneView : Grid
                 AddConversion(it, new DownloadOptions { Kind = MediaKind.Video, Format = "mp4", TargetSizeMB = 20 }, $"{it.Title} (20 MB)");
             });
         }
+        Add("Remove from list", Icons.Close, () => { _state.Items.Remove(it); Changed(); });
         Add("Delete the file", Icons.Trash, () =>
         {
             try { File.Delete(it.FilePath); } catch { }
@@ -390,6 +414,7 @@ public class PhoneView : Grid
 
     void OnAction(DownloadItem it, RowAction a)
     {
+        if (a == RowAction.More) { ShowItemMenu(it); return; }
         if (a == RowAction.Remove)
         {
             if (_running.TryGetValue(it.Id, out var c)) c.Cancel();
@@ -449,7 +474,11 @@ public class PhoneView : Grid
             {
                 if (_running.GetValueOrDefault(it.Id) == cts) _running.Remove(it.Id);
                 if (canceled) { if (it.Status == ItemStatus.Downloading) it.Status = ItemStatus.Paused; }
-                else if (error != null) { it.Status = ItemStatus.Failed; it.Message = error; }
+                else if (error != null)
+                {
+                    it.Status = ItemStatus.Failed; it.Message = error;
+                    Android.Util.Log.Warn("ClipHarbor", "Download failed: " + error); // readable with "adb logcat -s ClipHarbor"
+                }
                 else if (_state.TakeFreeNameIfShared(it)) { it.Speed = 0; it.Phase = ""; }
                 else
                 {
