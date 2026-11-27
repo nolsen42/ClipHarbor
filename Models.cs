@@ -88,6 +88,8 @@ public class DownloadItem
     [JsonIgnore] public double Speed { get; set; }
     [JsonIgnore] public double Eta { get; set; } = -1;
     [JsonIgnore] public string Phase { get; set; } = "";
+    /// <summary>The file the engine skipped as "already downloaded" during the current run, if any.</summary>
+    [JsonIgnore] public string AlreadyThere { get; set; } = "";
 }
 
 public class Subscription

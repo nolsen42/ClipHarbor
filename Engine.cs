@@ -716,6 +716,75 @@ public static class Engine
     /// <summary>Downloads without sign-in unless this item needed it before; if the site asks for sign-in, tries once more with it.</summary>
     static async Task YtDlpDownloadAsync(DownloadItem it, CancellationToken ct)
     {
+        var started = DateTime.UtcNow;
+        try { await YtDlpWithSignInAsync(it, ct); }
+        catch (Exception e) when (!ct.IsCancellationRequested && OthersFile(it, e.Message.Contains("Permission denied")) is { } other)
+        {
+            RemoveLeftovers(other, started);
+            await AgainUnderFreeName(it, other, ct);
+            return;
+        }
+        if (OthersFile(it, false) is { } skipped) { RemoveLeftovers(skipped, started); await AgainUnderFreeName(it, skipped, ct); }
+    }
+
+    /// <summary>The thumbnail and notes this run wrote next to a file it then couldn't use.</summary>
+    static void RemoveLeftovers(string other, DateTime since)
+    {
+        var stem = Path.Combine(Path.GetDirectoryName(other) ?? "", Path.GetFileNameWithoutExtension(other));
+        foreach (var ext in new[] { ".webp", ".jpg", ".png", ".meta", ".part", ".ytdl" })
+            try { if (File.Exists(stem + ext) && File.GetLastWriteTimeUtc(stem + ext) >= since.AddSeconds(-2)) File.Delete(stem + ext); }
+            catch { } // not ours: leave it
+    }
+
+    /// <summary>A file with this download's name that ClipHarbor isn't allowed to open, so yt-dlp skipped the download
+    /// as "already downloaded" and then couldn't finish it ("Permission denied"). On Android that's a file left in
+    /// Download/ClipHarbor by an earlier install of ClipHarbor (or another app); opening or sharing it would fail too.</summary>
+    /// <param name="guess">Also look for the name yt-dlp gives this title (on Android its own output doesn't come through).</param>
+    static string? OthersFile(DownloadItem it, bool guess)
+    {
+        var paths = new List<string> { it.AlreadyThere, it.FilePath };
+        if (guess)
+        {
+            var folder = string.IsNullOrWhiteSpace(it.Options.Folder) ? AppState.DefaultFolder() : it.Options.Folder;
+            if (it.Options.PlaylistSubfolder && !string.IsNullOrWhiteSpace(it.Playlist)) folder = Path.Combine(folder, SafeName(it.Playlist));
+            var stem = it.FileName.Length > 0 ? SafeName(it.FileName) : YtDlpName(it.Title);
+            // Android doesn't list other apps' files in a folder, but tells whether a named one is there.
+            if (stem.Length > 0)
+                foreach (var ext in new[] { it.Options.Format, "mp4", "mkv", "webm", "mp3", "m4a", "opus", "flac", "ogg", "mov", "gif", "webp" }.Distinct())
+                    paths.Add(Path.Combine(folder, stem + "." + ext));
+        }
+        foreach (var path in paths)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) continue;
+            try { using var f = File.OpenRead(path); }
+            catch (UnauthorizedAccessException) { return path; }
+            catch (IOException) { } // e.g. open in a player on Windows: that's still ours
+        }
+        return null;
+    }
+
+    /// <summary>A title as yt-dlp writes it into a file name: characters that aren't allowed become look-alikes.</summary>
+    static string YtDlpName(string title) =>
+        title.Replace('/', '⧸').Replace('\\', '⧹').Replace(':', '：').Replace('*', '＊').Replace('?', '？')
+             .Replace('"', '＂').Replace('<', '＜').Replace('>', '＞').Replace('|', '｜').Trim();
+
+    /// <summary>Downloads once more as "Title (2)" (or the next free number) next to the file it can't use.</summary>
+    static async Task AgainUnderFreeName(DownloadItem it, string other, CancellationToken ct)
+    {
+        var dir = Path.GetDirectoryName(other) ?? "";
+        var name = Path.GetFileNameWithoutExtension(other);
+        string free;
+        int n = 2;
+        do free = $"{name} ({n++})";
+        while (Directory.EnumerateFiles(dir, SafeName(free) + ".*").Any());
+        it.FileName = free;
+        it.FilePath = ""; it.AlreadyThere = "";
+        it.Progress = 0; it.DoneBytes = 0; it.Phase = "";
+        await YtDlpWithSignInAsync(it, ct);
+    }
+
+    static async Task YtDlpWithSignInAsync(DownloadItem it, CancellationToken ct)
+    {
         bool signIn = it.UseSignIn && BrowserChosen;
         try { await YtDlpOnceAsync(it, signIn, ct); }
         catch (SignInNeededException e) when (!signIn && BrowserChosen && e.Problem == SignInProblem.SiteWantsSignIn && !ct.IsCancellationRequested)
@@ -730,10 +799,13 @@ public static class Engine
     {
         Directory.CreateDirectory(string.IsNullOrWhiteSpace(it.Options.Folder) ? AppState.DefaultFolder() : it.Options.Folder);
         int stage = 0; long lastTotal = 0;
+        it.AlreadyThere = "";
         if (Runner != null)
         {
             var (code, o, e) = await Runner.RunAsync(BuildDownloadArgs(it, signIn), line => OnLine(line), ct);
             ct.ThrowIfCancellationRequested();
+            // (On Android only progress lines come through while it runs; the rest is in the output.)
+            foreach (var l in o.Split('\n')) if (AlreadyDownloaded(l.Trim()) is { } there) it.AlreadyThere = there;
             if (code != 0) throw Fail(e, signIn);
             // In case the lines didn't all come through while it ran.
             foreach (var l in o.Split('\n')) if (l.StartsWith("@@F ")) it.FilePath = l[4..].Trim();
@@ -788,11 +860,22 @@ public static class Engine
             {
                 it.FilePath = line[4..].Trim();
             }
+            else if (AlreadyDownloaded(line) is { } there)
+            {
+                it.AlreadyThere = there;
+            }
             else if (line.StartsWith("[Merger]") || line.StartsWith("[ExtractAudio]") || line.StartsWith("[VideoRemuxer]") || line.StartsWith("[EmbedSubtitle]"))
             {
                 it.Phase = "processing"; it.Progress = 1;
             }
         }
+    }
+
+    /// <summary>The file in yt-dlp's "[download] /path/Title.mp4 has already been downloaded", or null.</summary>
+    static string? AlreadyDownloaded(string line)
+    {
+        const string start = "[download] ", end = " has already been downloaded";
+        return line.StartsWith(start) && line.EndsWith(end) ? line[start.Length..^end.Length] : null;
     }
 
     // ---------- GIF / WebP ----------
