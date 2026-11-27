@@ -107,6 +107,8 @@ public class AppSettings
     public string Theme { get; set; } = "Light";
     public int MaxConcurrent { get; set; } = 3;
     public string SpeedLimit { get; set; } = "";
+    /// <summary>Pieces downloaded at once for each download, on sites that send video in pieces (yt-dlp -N).</summary>
+    public int Connections { get; set; } = 4;
     public string Proxy { get; set; } = "";
     public string FileNameTemplate { get; set; } = "%(title)s.%(ext)s";
     public string CookiesBrowser { get; set; } = "";

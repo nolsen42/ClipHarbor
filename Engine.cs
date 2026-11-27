@@ -469,6 +469,9 @@ public static class Engine
         if (it.FileName.Length > 0) a.Add(SafeName(it.FileName).Replace("%", "%%") + ".%(ext)s"); // a name typed for this download
         else a.Add(string.IsNullOrWhiteSpace(s.FileNameTemplate) ? "%(title)s.%(ext)s" : s.FileNameTemplate);
         if (!string.IsNullOrWhiteSpace(s.SpeedLimit)) { a.Add("-r"); a.Add(s.SpeedLimit.Trim()); }
+        // Several pieces at once on sites that send video in pieces (HLS/DASH: Twitch, X, Reddit, Vimeo, livestreams).
+        // Not with a speed limit: yt-dlp applies the limit to each piece, so the total would go over it.
+        else if (s.Connections > 1) { a.Add("-N"); a.Add(Math.Clamp(s.Connections, 1, 16).ToString(CultureInfo.InvariantCulture)); }
         if (!s.SkipExisting) a.Add("--force-overwrites");
 
         if (o.Kind == MediaKind.Animation)

@@ -13,6 +13,7 @@ public class SettingsDialog : Dialog
     readonly TextBox _template = new() { Width = 300 };
     readonly CheckBox _skip = new() { Content = "Skip files that are already downloaded" };
     readonly CheckBox _notify = new() { Content = "Show a notice when downloads finish" };
+    readonly NumericUpDown _connections = new() { Minimum = 1, Maximum = 16, Width = 120, FormatString = "0", Increment = 1 };
     readonly NumericUpDown _limit = new() { Minimum = 0, Maximum = 100000, Width = 140, FormatString = "0.#", Increment = 1 };
     readonly ComboBox _limitUnit = new() { Width = 90, ItemsSource = new[] { "MB/s", "KB/s" }, SelectedIndex = 0 };
     readonly TextBox _proxy = new() { Width = 300, Watermark = "e.g. http://127.0.0.1:8080" };
@@ -89,6 +90,9 @@ public class SettingsDialog : Dialog
         _limitUnit.SelectionChanged += (_, _) => _limit.Increment = _limitUnit.SelectedIndex == 1 ? 100 : 1;
         var limitRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { _limit, _limitUnit } };
         Row("Speed limit", limitRow, "for each download · 0 = no limit");
+        _connections.Value = Math.Clamp(s.Connections, 1, 16);
+        ToolTip.SetTip(_connections, "Many sites (Twitch, X, Reddit, Vimeo, livestreams) send a video in small pieces;\nthis many are downloaded at once. Normal YouTube videos come in one piece, so it changes little there.\nNot used while a speed limit is set.");
+        Row("Connections per download", _connections, "for sites that send video in pieces");
         _proxy.Text = s.Proxy;
         Row("Proxy", _proxy);
         _cookies.Width = Platform.IsWindows ? 220 : 160;
@@ -243,6 +247,7 @@ public class SettingsDialog : Dialog
     {
         _s.Theme = _theme.SelectedItem?.ToString() ?? "Light";
         _s.MaxConcurrent = (int)(_parallel.Value ?? 3);
+        _s.Connections = (int)(_connections.Value ?? 4);
         _s.FileNameTemplate = string.IsNullOrWhiteSpace(_template.Text) ? "%(title)s.%(ext)s" : _template.Text.Trim();
         _s.SkipExisting = _skip.IsChecked == true;
         _s.NotifyWhenDone = _notify.IsChecked == true;
