@@ -89,6 +89,7 @@
   "Under {0}": "Menos de {0}",
   "Change quality or format…": "Cambiar calidad o formato…",
   "Choices for this download": "Opciones de esta descarga",
+  "Remove": "Quitar",
   "Remove from list": "Quitar de la lista",
   "Remove and delete file": "Quitar y eliminar el archivo",
   "This needs the free converter (ffmpeg). Open Settings → Download engine and press Install or Add converter first.": "Esto necesita el convertidor gratuito (ffmpeg). Abre Ajustes → Motor de descarga y pulsa Instalar o Añadir convertidor.",

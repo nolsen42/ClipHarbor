@@ -82,7 +82,12 @@ public class SettingsDialog : Dialog
         Row("Downloads at the same time", _parallel, "no cap");
         _template.Text = s.FileNameTemplate;
         Row("File names", _template);
-        root.Children.Add(new TextBlock { Text = "Codes: %(title)s  %(uploader)s  %(upload_date)s  %(ext)s", Classes = { "sub", "small" }, Margin = new Thickness(C, -6, 0, 10) });
+        // The codes stay left to right; in a right-to-left language they line up under the box's right edge.
+        root.Children.Add(Lang.LeftToRight(new TextBlock
+        {
+            Text = "Codes: %(title)s  %(uploader)s  %(upload_date)s  %(ext)s", Classes = { "sub", "small" }, Margin = new Thickness(C, -6, 0, 10),
+            TextAlignment = Lang.IsRightToLeft ? TextAlignment.Right : TextAlignment.Left,
+        }));
         _skip.IsChecked = s.SkipExisting; Check(_skip);
         _notify.IsChecked = s.NotifyWhenDone; Check(_notify);
 

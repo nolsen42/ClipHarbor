@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Styling;
 
 namespace ClipHarbor;
 
@@ -27,7 +28,13 @@ public static class Lang
         ("ru", "Русский"),
         ("id", "Bahasa Indonesia"),
         ("tr", "Türkçe"),
+        ("ar", "العربية"),
     };
+
+    /// <summary>Languages written right to left: the whole layout is mirrored for them.</summary>
+    static readonly string[] RightToLeft = { "ar" };
+
+    public static bool IsRightToLeft => RightToLeft.Contains(Current);
 
     static Dictionary<string, string> _exact = new();
     static List<(Regex match, string[] parts, string to)> _patterns = new();
@@ -125,6 +132,13 @@ public static class Lang
         return found;
     }
 
+    /// <summary>Keeps a control's text left to right in a right-to-left language (file extensions, codes).</summary>
+    public static T LeftToRight<T>(T c) where T : Visual
+    {
+        if (IsRightToLeft) c.FlowDirection = Avalonia.Media.FlowDirection.LeftToRight;
+        return c;
+    }
+
     static readonly HashSet<string> _keep = new();
 
     /// <summary>Marks a text that must stay as it is on screen (a video title or channel name), and returns it.</summary>
@@ -142,6 +156,16 @@ public static class Lang
     public static void Install()
     {
         if (Current == "en") return;
+        // Right-to-left languages: every window (and the phone screen) is laid out mirrored.
+        // Text boxes (links, folders, times, file-name codes) and icons (play, pause, check) keep their direction.
+        if (IsRightToLeft && Application.Current is { } app)
+        {
+            Style Dir(Func<Selector?, Selector> pick, Avalonia.Media.FlowDirection d) =>
+                new(pick) { Setters = { new Setter(Visual.FlowDirectionProperty, d) } };
+            app.Styles.Add(Dir(x => x.Is<TopLevel>(), Avalonia.Media.FlowDirection.RightToLeft));
+            app.Styles.Add(Dir(x => x.Is<TextBox>(), Avalonia.Media.FlowDirection.LeftToRight));
+            app.Styles.Add(Dir(x => x.OfType<Icon>(), Avalonia.Media.FlowDirection.LeftToRight));
+        }
         TextBlock.TextProperty.Changed.AddClassHandler<TextBlock>((tb, e) =>
         {
             if (_busy || e.NewValue is not string s || s.Length == 0 || Kept(s)) return;

@@ -18,7 +18,7 @@ public class OptionsDialog : Dialog
     public string FileName = "";
 
     readonly TextBox _name = new();
-    readonly TextBlock _ext = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0), Classes = { "sub" } };
+    readonly TextBlock _ext = Lang.LeftToRight(new TextBlock { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0), Classes = { "sub" } });
     string _defaultName = "";
 
     readonly RadioButton _video = new() { Content = "Video", GroupName = "kind", IsChecked = true };

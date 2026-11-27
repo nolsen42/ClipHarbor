@@ -89,6 +89,7 @@
   "Under {0}": "До {0}",
   "Change quality or format…": "Изменить качество или формат…",
   "Choices for this download": "Настройки этой загрузки",
+  "Remove": "Удалить",
   "Remove from list": "Убрать из списка",
   "Remove and delete file": "Убрать и удалить файл",
   "This needs the free converter (ffmpeg). Open Settings → Download engine and press Install or Add converter first.": "Для этого нужен бесплатный конвертер (ffmpeg). Откройте Настройки → Движок загрузки и нажмите «Установить» или «Добавить конвертер».",

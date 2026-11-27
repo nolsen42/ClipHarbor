@@ -21,7 +21,7 @@ ClipHarbor is free and stays free. If it's useful to you, you can [support it on
 - **Subscriptions**: follow a channel or playlist and new videos download automatically. ClipHarbor keeps running in the system tray (menu bar on a Mac) after you close the window, so checks keep happening, and it can start hidden when you sign in to your computer.
 - **Download list**: progress, speed and time left. Pause, resume, retry, open the file or show it in its folder. You can search and filter the list.
 - **Settings**: light, dark or system look, how many downloads run at once, connections per download, speed limit, proxy, file-name template, browser sign-in for private or age-restricted videos, and embedded cover art and metadata.
-- **Your language**: English, Spanish, Portuguese (Brazil), Russian, Indonesian and Turkish. ClipHarbor follows your computer's or phone's language, or you can pick one in Settings.
+- **Your language**: English, Spanish, Portuguese (Brazil), Russian, Indonesian, Turkish and Arabic (with the layout mirrored right to left). ClipHarbor follows your computer's or phone's language, or you can pick one in Settings.
 
 ### Help translate
 
