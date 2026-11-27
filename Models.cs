@@ -201,6 +201,37 @@ public class AppState
     {
         try { Write(Snapshot()); } catch { }
     }
+
+    static StringComparison PathCase => Platform.IsLinux ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+    /// <summary>Whether a queued item has to wait before it starts: its last run is still stopping (after a quick
+    /// pause and resume), or another link with the same title is downloading into the same folder right now
+    /// (both would write the same file at once).</summary>
+    public bool MustWait<T>(DownloadItem it, IReadOnlyDictionary<string, T> running) =>
+        running.ContainsKey(it.Id) || Items.Any(o => o != it && o.Status == ItemStatus.Downloading && o.Url != it.Url
+            && string.Equals(o.Title, it.Title, StringComparison.OrdinalIgnoreCase) && o.Playlist == it.Playlist
+            && string.Equals(o.Options.Folder, it.Options.Folder, PathCase));
+
+    /// <summary>A finished download ended up with a file that belongs to a different link in the list: two
+    /// videos with the same title, so the engine skipped this one as "already downloaded". Gives it a free
+    /// name ("Title (2)") and queues it again. Returns whether it did.</summary>
+    public bool TakeFreeNameIfShared(DownloadItem it)
+    {
+        // (With "skip files that already exist" off, the engine replaces files instead; nothing to fix up then.)
+        if (!Settings.SkipExisting || it.SourceFile.Length > 0 || string.IsNullOrEmpty(it.FilePath)) return false;
+        if (!Items.Any(o => o != it && o.Status == ItemStatus.Done && o.Url != it.Url && string.Equals(o.FilePath, it.FilePath, PathCase))) return false;
+        var dir = Path.GetDirectoryName(it.FilePath) ?? "";
+        var name = it.FileName.Length > 0 ? it.FileName : Path.GetFileNameWithoutExtension(it.FilePath);
+        string free;
+        int n = 2;
+        do free = $"{name} ({n++})";
+        while (Directory.Exists(dir) && Directory.EnumerateFiles(dir, Engine.SafeName(free) + ".*").Any());
+        it.FileName = free;
+        it.FilePath = "";
+        it.Progress = 0; it.DoneBytes = 0; it.TotalBytes = 0;
+        it.Status = ItemStatus.Queued;
+        return true;
+    }
 }
 
 public static class Fmt

@@ -842,6 +842,7 @@ public class MainWindow : Window
         foreach (var it in _state.Items.Where(i => i.Status == ItemStatus.Queued).OrderBy(i => i.Added).ToList())
         {
             if (running >= max || _shot != null || _engineUpdating) break;
+            if (_state.MustWait(it, _running)) continue;
             Start(it);
             running++;
         }
@@ -881,9 +882,11 @@ public class MainWindow : Window
             catch (Exception ex) { if (cts.IsCancellationRequested) canceled = true; else error = ex.Message; }
             Dispatcher.UIThread.Post(() =>
             {
-                _running.Remove(it.Id);
+                // Only this run's entry (a newer run of the same item must stay tracked).
+                if (_running.GetValueOrDefault(it.Id) == cts) _running.Remove(it.Id);
                 if (canceled) { if (it.Status == ItemStatus.Downloading) it.Status = ItemStatus.Paused; }
                 else if (error != null) { it.Status = ItemStatus.Failed; it.Message = error; }
+                else if (_state.TakeFreeNameIfShared(it)) { it.Speed = 0; it.Phase = ""; }
                 else
                 {
                     it.Status = ItemStatus.Done; it.Progress = 1; it.Speed = 0; it.Phase = "";

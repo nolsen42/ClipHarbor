@@ -416,6 +416,7 @@ public class PhoneView : Grid
         foreach (var it in _state.Items.Where(i => i.Status == ItemStatus.Queued).OrderBy(i => i.Added).ToList())
         {
             if (_running.Count >= max) break;
+            if (_state.MustWait(it, _running)) continue;
             Start(it);
         }
         if (_running.Count > 0) RowView.RefreshAll();
@@ -446,9 +447,10 @@ public class PhoneView : Grid
             catch (Exception ex) { if (cts.IsCancellationRequested) canceled = true; else error = ex.Message; }
             Dispatcher.UIThread.Post(() =>
             {
-                _running.Remove(it.Id);
+                if (_running.GetValueOrDefault(it.Id) == cts) _running.Remove(it.Id);
                 if (canceled) { if (it.Status == ItemStatus.Downloading) it.Status = ItemStatus.Paused; }
                 else if (error != null) { it.Status = ItemStatus.Failed; it.Message = error; }
+                else if (_state.TakeFreeNameIfShared(it)) { it.Speed = 0; it.Phase = ""; }
                 else
                 {
                     it.Status = ItemStatus.Done; it.Progress = 1; it.Speed = 0; it.Phase = "";
