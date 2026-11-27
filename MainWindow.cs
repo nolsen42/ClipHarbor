@@ -624,10 +624,16 @@ public class MainWindow : Window
         Changed();
     }
 
-    async Task OpenSettings()
+    async Task<bool> OpenSettings()
     {
         var d = new SettingsDialog(_state.Settings);
         var ok = await d.ShowDialog<bool?>(this) == true;
+        await AfterSettings(d, ok);
+        return ok;
+    }
+
+    async Task AfterSettings(SettingsDialog d, bool ok)
+    {
         if (ok)
         {
             App.ApplyTheme(_state.Settings.Theme);
@@ -653,7 +659,16 @@ public class MainWindow : Window
                 break;
             case RowAction.Folder: ShowInFolder(it); break;
             case RowAction.Remove: _ = Remove(new[] { it }, false); break;
+            case RowAction.Fix: _ = FixInSettings(it); break;
         }
+        Changed();
+    }
+
+    /// <summary>"Open Settings" on a failed download: after the settings are saved, it tries again.</summary>
+    async Task FixInSettings(DownloadItem it)
+    {
+        if (!await OpenSettings() || it.Status != ItemStatus.Failed) return;
+        it.Status = ItemStatus.Queued; it.Message = "";
         Changed();
     }
 

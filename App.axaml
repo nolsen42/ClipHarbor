@@ -15,6 +15,7 @@
           <SolidColorBrush x:Key="Line" Color="#DDE0E6" />
           <SolidColorBrush x:Key="Text" Color="#1D2129" />
           <SolidColorBrush x:Key="SubText" Color="#6A7280" />
+          <SolidColorBrush x:Key="RowIcon" Color="#4A5160" />
           <SolidColorBrush x:Key="Hover" Color="#F0F3F8" />
           <SolidColorBrush x:Key="Selected" Color="#E3ECFD" />
           <SolidColorBrush x:Key="SelectedLine" Color="#97B7F5" />
@@ -35,6 +36,7 @@
           <SolidColorBrush x:Key="Line" Color="#363A42" />
           <SolidColorBrush x:Key="Text" Color="#ECEEF2" />
           <SolidColorBrush x:Key="SubText" Color="#9AA1AE" />
+          <SolidColorBrush x:Key="RowIcon" Color="#C6CBD4" />
           <SolidColorBrush x:Key="Hover" Color="#2D3138" />
           <SolidColorBrush x:Key="Selected" Color="#263655" />
           <SolidColorBrush x:Key="SelectedLine" Color="#2A4F96" />
@@ -207,6 +209,16 @@
     <Style Selector="Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Track}" />
       <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+    <!-- The buttons on each download: a little bigger and easier to see than other icon buttons. -->
+    <Style Selector="Button.icon.row">
+      <Setter Property="Width" Value="36" />
+      <Setter Property="Height" Value="36" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Foreground" Value="{DynamicResource RowIcon}" />
+    </Style>
+    <Style Selector="Button.icon.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource Bad}" />
     </Style>
     <Style Selector="Button.icon.brand"><Setter Property="Foreground" Value="{DynamicResource Brand}" /></Style>
     <Style Selector="Button.link">

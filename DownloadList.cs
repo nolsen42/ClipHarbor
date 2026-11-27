@@ -9,7 +9,7 @@ using Avalonia.VisualTree;
 
 namespace ClipHarbor;
 
-public enum RowAction { None, Primary, Folder, Remove }
+public enum RowAction { None, Primary, Folder, Remove, Fix }
 
 /// <summary>Scrollable list of downloads, with an empty-state message.</summary>
 public class DownloadList : Panel
@@ -95,6 +95,9 @@ public class DownloadList : Panel
         RowAction.Remove => "Remove from list",
         _ => ""
     };
+
+    /// <summary>Whether a failed download can be fixed in Settings (its message says so, e.g. "Turn on 'Use sign-in from browser' in Settings").</summary>
+    public static bool FixInSettings(DownloadItem it) => it.Status == ItemStatus.Failed && it.Message.Contains("in Settings");
 }
 
 /// <summary>One download in the list. Refreshed in place while it runs.</summary>
@@ -113,6 +116,7 @@ public class RowView : Border
     readonly Button _primary = Ui.IconButton(Icons.Pause, "Pause");
     readonly Button _folder = Ui.IconButton(Icons.Folder, "Show in folder");
     readonly Button _remove = Ui.IconButton(Icons.Close, "Remove from list");
+    readonly Button _fix = new() { Content = "Open Settings", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0), IsVisible = false };
     DownloadItem? _item;
 
     /// <summary>Phone layout: smaller picture, a progress bar that fits the width, no folder button.</summary>
@@ -141,7 +145,10 @@ public class RowView : Border
         statusRow.Children.Add(_status);
 
         var text = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14, 0, 12, 0), Children = { _title, _meta, statusRow } };
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center, Children = { _primary, _folder, _remove } };
+        foreach (var b in new[] { _primary, _folder, _remove }) { b.Classes.Add("row"); ((Icon)b.Content!).Width = ((Icon)b.Content!).Height = 18; }
+        _remove.Classes.Add("danger");
+        _remove.Margin = new Thickness(6, 0, 0, 0); // a little apart, so it's not hit instead of the folder
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { _fix, _primary, _folder, _remove } };
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
         grid.Children.Add(_thumb);
@@ -152,6 +159,7 @@ public class RowView : Border
         _primary.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Primary); };
         _folder.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Folder); };
         _remove.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Remove); };
+        _fix.Click += (_, _) => { if (_item != null) _owner.RaiseAction(_item, RowAction.Fix); };
         ToolTip.SetTip(_folder, DownloadList.Tooltip(new DownloadItem(), RowAction.Folder));
     }
 
@@ -222,6 +230,7 @@ public class RowView : Border
             _statusIcon.Data = icon;
         }
         ToolTip.SetTip(_status, it.Status == ItemStatus.Failed ? it.Message : null);
+        _fix.IsVisible = !Compact && DownloadList.FixInSettings(it);
 
         ((Icon)_primary.Content!).Data = it.Status switch
         {
