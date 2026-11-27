@@ -269,7 +269,7 @@
   "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.": "Versi baru diunduh di latar belakang dan dipakai saat ClipHarbor dibuka berikutnya.\nSaat tersembunyi di baki tanpa kegiatan, ClipHarbor memulai ulang sendiri ke versi baru.",
   "Checking…": "Memeriksa…",
   "Version {0}. You have the latest version.": "Versi {0}. Anda memakai versi terbaru.",
-  "Version {0} is available (you have {1}). Close Settings and press Update now.": "Versi {0} tersedia (Anda memakai {1}). Tutup Pengaturan lalu tekan Perbarui sekarang.",
+  "Version {0} is available (you have {1}).": "Versi {0} tersedia (Anda memakai {1}).",
   "Couldn't check: {0}": "Tidak bisa memeriksa: {0}",
   "The download engine isn't installed yet. It's free and open source (yt-dlp, with ffmpeg for high quality and audio). Press Install to get it — {0}.": "Mesin unduh belum terpasang. Gratis dan sumber terbuka (yt-dlp, dengan ffmpeg untuk kualitas tinggi dan audio). Tekan Pasang untuk mendapatkannya — {0}.",
   "Add converter": "Tambah konverter",

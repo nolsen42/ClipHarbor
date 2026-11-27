@@ -269,7 +269,7 @@
   "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.": "Las nuevas versiones se descargan en segundo plano y se usan la próxima vez que se inicie ClipHarbor.\nSi está oculto en la bandeja sin nada que hacer, se reinicia solo con la nueva versión.",
   "Checking…": "Comprobando…",
   "Version {0}. You have the latest version.": "Versión {0}. Tienes la última versión.",
-  "Version {0} is available (you have {1}). Close Settings and press Update now.": "La versión {0} está disponible (tienes la {1}). Cierra Ajustes y pulsa Actualizar ahora.",
+  "Version {0} is available (you have {1}).": "La versión {0} está disponible (tienes la {1}).",
   "Couldn't check: {0}": "No se pudo comprobar: {0}",
   "The download engine isn't installed yet. It's free and open source (yt-dlp, with ffmpeg for high quality and audio). Press Install to get it — {0}.": "El motor de descarga aún no está instalado. Es gratuito y de código abierto (yt-dlp, con ffmpeg para alta calidad y audio). Pulsa Instalar para obtenerlo — {0}.",
   "Add converter": "Añadir convertidor",

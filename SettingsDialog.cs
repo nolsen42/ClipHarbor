@@ -36,6 +36,9 @@ public class SettingsDialog : Dialog
     readonly CheckBox _autoInstall =new() { Content = "Install them automatically" };
     readonly CheckBox _autoEngine =new() { Content = "Keep the download engine up to date automatically" };
     readonly Button _checkApp = Ui.Button("Check now");
+    readonly Button _updateApp = Ui.Button("Update now", null, "accent");
+    /// <summary>"Update now" was pressed: the settings are saved and the main window updates ClipHarbor.</summary>
+    public bool UpdateRequested { get; private set; }
     readonly TextBlock _appStatus = new() { Classes = { "sub" }, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 };
 
     /// <summary>A newer ClipHarbor found with "Check now"; the main window offers it after Settings closes.</summary>
@@ -168,7 +171,9 @@ public class SettingsDialog : Dialog
 
         void AddUpdateControls()
         {
-            root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 0, 0, 10), Children = { _checkApp, _appStatus } });
+            _updateApp.IsVisible = false;
+            _updateApp.Click += (_, _) => { Save(); UpdateRequested = true; Close(true); };
+            root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 0, 0, 10), Children = { _checkApp, _updateApp, _appStatus } });
             root.Children.Add(_autoUpdate);
             _autoInstall.IsEnabled = s.CheckAppUpdates;
             _autoInstall.Margin = new Thickness(28, 4, 0, 0);
@@ -184,10 +189,13 @@ public class SettingsDialog : Dialog
                     FoundUpdate = await Updater.CheckAsync(CancellationToken.None);
                     _appStatus.Text = FoundUpdate == null
                         ? $"Version {Updater.CurrentText}. You have the latest version."
-                        : $"Version {FoundUpdate.Version.ToString(3)} is available (you have {Updater.CurrentText}). Close Settings and press Update now.";
+                        : $"Version {FoundUpdate.Version.ToString(3)} is available (you have {Updater.CurrentText}).";
                 }
                 catch (Exception ex) { _appStatus.Text = "Couldn't check: " + ex.Message; }
                 _checkApp.IsEnabled = true;
+                // Found one: "Update now" takes the place of "Check now".
+                _updateApp.IsVisible = FoundUpdate != null;
+                _checkApp.IsVisible = FoundUpdate == null;
             };
         }
     }

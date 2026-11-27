@@ -655,7 +655,8 @@ public class MainWindow : Window
                 await Dialog.Info(this, "Settings", "ClipHarbor couldn't set itself to start when you sign in. Your other settings were saved.");
         }
         if (Engine.HasEngine && _banner.IsVisible && (_bannerText.Text ?? "").StartsWith("One-time")) _banner.IsVisible = false;
-        if (_readyProgram != null && d.FoundUpdate != null) ShowRestartBanner();
+        if (d.UpdateRequested && d.FoundUpdate != null) { _update = d.FoundUpdate; await UpdateNowAsync(); }
+        else if (_readyProgram != null && d.FoundUpdate != null) ShowRestartBanner();
         else if (d.FoundUpdate != null) { _update = d.FoundUpdate; ShowUpdateBanner(); }
     }
 

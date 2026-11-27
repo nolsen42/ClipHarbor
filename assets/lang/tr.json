@@ -269,7 +269,7 @@
   "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.": "Yeni sürümler arka planda iner ve ClipHarbor bir sonraki açılışta onları kullanır.\nTepside gizli ve boştayken yeni sürümle kendiliğinden yeniden başlar.",
   "Checking…": "Denetleniyor…",
   "Version {0}. You have the latest version.": "Sürüm {0}. En son sürüme sahipsiniz.",
-  "Version {0} is available (you have {1}). Close Settings and press Update now.": "{0} sürümü çıktı (sizdeki: {1}). Ayarlar'ı kapatıp Şimdi güncelle'ye basın.",
+  "Version {0} is available (you have {1}).": "{0} sürümü çıktı (sizdeki: {1}).",
   "Couldn't check: {0}": "Denetlenemedi: {0}",
   "The download engine isn't installed yet. It's free and open source (yt-dlp, with ffmpeg for high quality and audio). Press Install to get it — {0}.": "İndirme motoru henüz kurulu değil. Ücretsiz ve açık kaynaklıdır (yt-dlp; yüksek kalite ve ses için ffmpeg ile). Almak için Kur'a basın — {0}.",
   "Add converter": "Dönüştürücü ekle",
