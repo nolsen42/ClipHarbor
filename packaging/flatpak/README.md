@@ -63,6 +63,18 @@ flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo repo
 
 ## Submitting to Flathub
 
-1. In the manifest, replace the `type: dir` source with the `git` source shown in the comment above it, using the release tag and its commit. Also set `-p:Version=` to that release.
-2. Fork https://github.com/flathub/flathub and branch off `new-pr`. Add the manifest, `nuget-sources.json` and the files it installs. Open a pull request against `new-pr`, following https://docs.flathub.org/docs/for-app-authors/submission.
-3. After it's accepted, Flathub makes a repository `flathub/io.github.nolsen42.ClipHarbor` for future updates. Each update is a small pull request there with the new tag, commit and version, plus a `<release>` line in the metainfo. New yt-dlp releases arrive as pull requests from Flathub's bot.
+The `flathub` folder holds exactly what goes to Flathub:
+- the manifest, built from a release tag instead of this checkout
+- `nuget-sources.json`
+- the metainfo, which supplies the store listing and release notes
+
+1. Fork https://github.com/flathub/flathub, keeping "Copy the master branch only" unticked.
+2. In the fork, add the three files from `flathub` on the `new-pr` branch.
+3. Open a pull request against `new-pr`, titled "Add io.github.nolsen42.ClipHarbor". See https://docs.flathub.org/docs/for-app-authors/submission.
+4. After it's accepted, Flathub makes a repository `flathub/io.github.nolsen42.ClipHarbor`. Each later release is a small pull request there:
+   - the new tag and its commit
+   - `-p:Version=`
+   - a `<release>` entry in the metainfo
+   - `nuget-sources.json` made again, if packages changed
+
+   New yt-dlp releases arrive there as pull requests from Flathub's bot.

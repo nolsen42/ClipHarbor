@@ -107,7 +107,6 @@ modules:
           url: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
           version-query: .tag_name
           url-query: '"https://github.com/yt-dlp/yt-dlp/releases/download/" + $version + "/yt-dlp"'
-          is-main-source: true
 
   # ---- ClipHarbor itself, built offline from source ----
   - name: clipharbor
@@ -130,7 +129,7 @@ modules:
       - >-
         dotnet publish ClipHarbor.csproj -c Release --runtime $RUNTIME --self-contained true
         --source ./nuget-sources --source /usr/lib/sdk/dotnet10/nuget/packages
-        -p:DebugType=none -p:Version=1.5.1 -o /app/lib/clipharbor
+        -p:DebugType=none -p:Version=1.5.2 -o /app/lib/clipharbor
       - mkdir -p /app/bin
       - ln -s /app/lib/clipharbor/ClipHarbor /app/bin/clipharbor
       - install -Dm644 packaging/flatpak/io.github.nolsen42.ClipHarbor.desktop -t /app/share/applications
