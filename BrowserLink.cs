@@ -41,6 +41,8 @@ public static class BrowserLink
     {
         // Test copies with their own data folder leave the real app's entry alone.
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CLIPHARBOR_DATA_DIR"))) return;
+        // A Flatpak's own desktop file already says it opens these links.
+        if (Platform.IsFlatpak) return;
         try
         {
             if (OperatingSystem.IsWindows())

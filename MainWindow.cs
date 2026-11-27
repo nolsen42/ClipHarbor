@@ -144,6 +144,12 @@ public class MainWindow : Window
     /// <summary>Looks for a newer release on GitHub. Automatic checks stay quiet unless one is found.</summary>
     public async Task CheckForUpdateAsync(bool manual)
     {
+        if (Platform.IsFlatpak)
+        {
+            // Flathub updates the app (and its engine) with the rest of the system.
+            if (manual) await Dialog.Info(this, "Updates", $"This is version {Updater.CurrentText}. Updates come through your software center (Discover or GNOME Software) or the \"flatpak update\" command.");
+            return;
+        }
         if (_readyProgram != null) { if (manual) ShowRestartBanner(); return; }
         if (_updating || (!manual && !_state.Settings.CheckAppUpdates)) return;
         _lastUpdateCheck = DateTime.Now;

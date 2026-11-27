@@ -16,7 +16,13 @@ public static class SingleInstance
             // A separate data folder (used for testing) is a separate app.
             // (string.GetHashCode differs between runs, so use a fixed checksum.)
             var suffix = string.IsNullOrEmpty(dataDir) ? "" : "-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(dataDir)))[..12];
-            return "ClipHarbor-" + (user.Length > 0 ? user : "user") + suffix;
+            var name = "ClipHarbor-" + (user.Length > 0 ? user : "user") + suffix;
+            // In a Flatpak each start may get its own /tmp, where the pipe usually lives; this folder is
+            // shared by every copy of the app.
+            if (Platform.IsFlatpak && Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR") is { Length: > 0 } run
+                && Environment.GetEnvironmentVariable("FLATPAK_ID") is { Length: > 0 } id && Directory.Exists(Path.Combine(run, "app", id)))
+                return Path.Combine(run, "app", id, name);
+            return name;
         }
     }
 
@@ -104,6 +110,14 @@ public static class StartAtLogin
                         """);
                 }
                 else if (File.Exists(MacAgent)) File.Delete(MacAgent);
+            }
+            else if (Platform.IsFlatpak)
+            {
+                // The sandbox can't write the autostart folder; the Background portal makes the entry
+                // (and may ask the person once). "clipharbor" is the command the Flatpak puts in /app/bin.
+                Platform.Portal("org.freedesktop.portal.Background.RequestBackground", "''",
+                    $"{{'reason': <{Platform.GText("Check subscriptions and finish downloads from the tray")}>, " +
+                    $"'autostart': <{(on ? "true" : "false")}>, 'commandline': <['clipharbor', '{Flag}']>, 'dbus-activatable': <false>}}");
             }
             else
             {

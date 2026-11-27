@@ -35,7 +35,8 @@ public partial class App : Application
             {
                 MakeTray();
                 SingleInstance.Listen(lines => Dispatcher.UIThread.Post(() => OnHandOff(lines)));
-                if (state.Settings.StartAtLogin) StartAtLogin.Set(true); // keeps the entry right if the app was moved
+                // Keeps the entry right if the app was moved. (A Flatpak never moves, and asking the portal at every start could show its question again.)
+                if (state.Settings.StartAtLogin && !Platform.IsFlatpak) StartAtLogin.Set(true);
                 _ = Task.Run(BrowserLink.Register); // clipharbor:// links from the browser open this app
                 _ = Task.Run(Updater.RefreshInstalledVersion); // installed copy: keep Settings → Apps showing this version
                 // macOS: clicking the Dock icon while the window is hidden brings it back,

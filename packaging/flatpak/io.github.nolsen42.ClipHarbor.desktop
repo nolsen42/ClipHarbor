@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ClipHarbor
+GenericName=Video Downloader
+Comment=Download videos and audio from YouTube and other sites
+Exec=clipharbor %u
+Icon=io.github.nolsen42.ClipHarbor
+Terminal=false
+Categories=AudioVideo;Network;
+Keywords=youtube;video;audio;download;mp3;mp4;gif;yt-dlp;
+MimeType=x-scheme-handler/clipharbor;
+StartupWMClass=ClipHarbor

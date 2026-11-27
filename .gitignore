@@ -18,3 +18,9 @@ yt-dlp.exe
 ffmpeg.exe
 ffprobe.exe
 *.part
+
+# Flatpak test builds (packaging/flatpak/README.md)
+packaging/flatpak/.flatpak-builder/
+packaging/flatpak/build-dir/
+packaging/flatpak/repo/
+packaging/flatpak/flatpak-dotnet-generator.py

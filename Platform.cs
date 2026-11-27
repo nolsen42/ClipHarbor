@@ -34,6 +34,10 @@ public static class Platform
         }
     }
 
+    /// <summary>Running inside a Flatpak (e.g. installed from Flathub). The app is then read-only and updated by
+    /// the system, comes with its own yt-dlp and ffmpeg, and reaches the desktop through portals.</summary>
+    public static bool IsFlatpak { get; } = IsLinux && File.Exists("/.flatpak-info");
+
     /// <summary>The program file to start, register or replace: the .AppImage when there is one.</summary>
     public static string? AppPath => AppImage ?? Environment.ProcessPath;
 
@@ -183,6 +187,9 @@ public static class Platform
         if (AndroidNotify != null) AndroidNotify(title, body);
         else if (IsMac)
             Run("osascript", "-e", $"display notification {AppleText(body)} with title {AppleText(title)}");
+        else if (IsFlatpak)
+            Portal("org.freedesktop.portal.Notification.AddNotification", "'done'",
+                $"{{'title': <{GText(title)}>, 'body': <{GText(body)}>}}");
         else if (IsLinux)
             Run("notify-send", "--app-name=ClipHarbor", title, body);
         else if (IsWindows && windowHandle != IntPtr.Zero)
@@ -190,6 +197,15 @@ public static class Platform
     }
 
     static string AppleText(string s) => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
+    /// <summary>A text value written for gdbus (GVariant text format).</summary>
+    public static string GText(string s) => "'" + s.Replace("\\", "\\\\").Replace("'", "\\'") + "'";
+
+    /// <summary>Calls a desktop portal (Flatpak's way to reach the desktop from the sandbox) with gdbus,
+    /// which every Flatpak runtime has. Each argument is in GVariant text format.</summary>
+    public static void Portal(string method, params string[] args) =>
+        Run("gdbus", new[] { "call", "--session", "--dest", "org.freedesktop.portal.Desktop",
+            "--object-path", "/org/freedesktop/portal/desktop", "--method", method }.Concat(args).ToArray());
 
     [StructLayout(LayoutKind.Sequential)]
     struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }

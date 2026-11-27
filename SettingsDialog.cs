@@ -114,11 +114,17 @@ public class SettingsDialog : Dialog
         root.Children.Add(_engineStatus);
         _engineBar.Margin = new Thickness(0, 10, 0, 0);
         root.Children.Add(_engineBar);
-        root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _install, _update } });
         _autoEngine.IsChecked = s.UpdateEngineAutomatically;
-        _autoEngine.Margin = new Thickness(0, 0, 0, 16);
-        ToolTip.SetTip(_autoEngine, "Video sites change often, and an old engine stops working on them.\nChecks when ClipHarbor starts and once a day, while nothing is downloading.");
-        root.Children.Add(_autoEngine);
+        if (Platform.IsFlatpak)
+            // The Flatpak brings its own engine and converter; new versions come with app updates.
+            root.Children.Add(new TextBlock { Text = "Comes with this copy of ClipHarbor and is updated along with it.", Classes = { "sub", "small" }, Margin = new Thickness(0, 6, 0, 16) });
+        else
+        {
+            root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _install, _update } });
+            _autoEngine.Margin = new Thickness(0, 0, 0, 16);
+            ToolTip.SetTip(_autoEngine, "Video sites change often, and an old engine stops working on them.\nChecks when ClipHarbor starts and once a day, while nothing is downloading.");
+            root.Children.Add(_autoEngine);
+        }
         _enginePath.Text = s.EnginePath; Row($"Engine file ({Platform.Exe("yt-dlp")})", _enginePath);
         _ffPath.Text = s.FfmpegPath; Row($"Converter file ({Platform.Exe("ffmpeg")})", _ffPath);
         _install.Click += async (_, _) => await Install();
@@ -126,29 +132,14 @@ public class SettingsDialog : Dialog
 
         Section("About ClipHarbor");
         _appStatus.Text = $"Version {Updater.CurrentText}";
-        root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 0, 0, 10), Children = { _checkApp, _appStatus } });
         _autoUpdate.IsChecked = s.CheckAppUpdates;
-        root.Children.Add(_autoUpdate);
         _autoInstall.IsChecked = s.InstallAppUpdates;
-        _autoInstall.IsEnabled = s.CheckAppUpdates;
-        _autoInstall.Margin = new Thickness(28, 4, 0, 0);
-        _autoUpdate.IsCheckedChanged += (_, _) => _autoInstall.IsEnabled = _autoUpdate.IsChecked == true;
-        ToolTip.SetTip(_autoInstall, "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.");
-        root.Children.Add(_autoInstall);
-        _checkApp.Click += async (_, _) =>
+        if (Platform.IsFlatpak)
         {
-            _checkApp.IsEnabled = false;
-            _appStatus.Text = "Checking…";
-            try
-            {
-                FoundUpdate = await Updater.CheckAsync(CancellationToken.None);
-                _appStatus.Text = FoundUpdate == null
-                    ? $"Version {Updater.CurrentText}. You have the latest version."
-                    : $"Version {FoundUpdate.Version.ToString(3)} is available (you have {Updater.CurrentText}). Close Settings and press Update now.";
-            }
-            catch (Exception ex) { _appStatus.Text = "Couldn't check: " + ex.Message; }
-            _checkApp.IsEnabled = true;
-        };
+            _appStatus.Text += ". Updates come through your software center.";
+            root.Children.Add(_appStatus);
+        }
+        else AddUpdateControls();
 
         var ok = Ui.Button("Save", null, "accent"); ok.MinWidth = 120; ok.HorizontalContentAlignment = HorizontalAlignment.Center;
         var cancel = Ui.Button("Cancel"); cancel.MinWidth = 100; cancel.HorizontalContentAlignment = HorizontalAlignment.Center;
@@ -164,6 +155,31 @@ public class SettingsDialog : Dialog
 
         RefreshEngine();
         Closed += (_, _) => _cts?.Cancel();
+
+        void AddUpdateControls()
+        {
+            root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 0, 0, 10), Children = { _checkApp, _appStatus } });
+            root.Children.Add(_autoUpdate);
+            _autoInstall.IsEnabled = s.CheckAppUpdates;
+            _autoInstall.Margin = new Thickness(28, 4, 0, 0);
+            _autoUpdate.IsCheckedChanged += (_, _) => _autoInstall.IsEnabled = _autoUpdate.IsChecked == true;
+            ToolTip.SetTip(_autoInstall, "New versions download in the background and start the next time ClipHarbor starts.\nWhile it's hidden in the tray with nothing to do, it restarts into the new version by itself.");
+            root.Children.Add(_autoInstall);
+            _checkApp.Click += async (_, _) =>
+            {
+                _checkApp.IsEnabled = false;
+                _appStatus.Text = "Checking…";
+                try
+                {
+                    FoundUpdate = await Updater.CheckAsync(CancellationToken.None);
+                    _appStatus.Text = FoundUpdate == null
+                        ? $"Version {Updater.CurrentText}. You have the latest version."
+                        : $"Version {FoundUpdate.Version.ToString(3)} is available (you have {Updater.CurrentText}). Close Settings and press Update now.";
+                }
+                catch (Exception ex) { _appStatus.Text = "Couldn't check: " + ex.Message; }
+                _checkApp.IsEnabled = true;
+            };
+        }
     }
 
     async void RefreshEngine()
