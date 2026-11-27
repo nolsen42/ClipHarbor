@@ -1,0 +1,54 @@
+name: Website
+
+# The website (docs/) plus the Flatpak repository (from the latest release) on GitHub Pages.
+# Needs Settings → Pages → Source set to "GitHub Actions".
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Put the site together
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir site
+          cp -r docs/. site/
+          # The Flatpak repository and its .flatpakref/.flatpakrepo files, made by the release workflow.
+          if gh release download --repo "$GITHUB_REPOSITORY" --pattern ClipHarbor-flatpak-repo.tar --dir . 2>/dev/null; then
+            mkdir -p site/flatpak
+            tar -xf ClipHarbor-flatpak-repo.tar -C site/flatpak
+            mv site/flatpak/clipharbor.flatpakref site/flatpak/clipharbor.flatpakrepo site/
+          else
+            echo "::notice::The latest release has no Flatpak repository yet; publishing the website only."
+          fi
+          touch site/.nojekyll
+          du -sh site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

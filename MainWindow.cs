@@ -121,6 +121,7 @@ public class MainWindow : Window
     /// current. It waits while downloads run, since they use the program being replaced.</summary>
     async Task UpdateEngineQuietlyAsync()
     {
+        if (_running.Count == 0) Engine.UseUpdatableFlatpakEngine();
         if (!_state.Settings.UpdateEngineAutomatically || _running.Count > 0 || (!Engine.IsOwnEngine && !Engine.HasOldStaticFfmpeg)) return;
         _lastEngineUpdate = DateTime.Now;
         _engineUpdating = true;
@@ -146,7 +147,7 @@ public class MainWindow : Window
     {
         if (Platform.IsFlatpak)
         {
-            // Flathub updates the app (and its engine) with the rest of the system.
+            // Flatpak updates the app with the rest of the system (from the ClipHarbor Flatpak repository).
             if (manual) await Dialog.Info(this, "Updates", $"This is version {Updater.CurrentText}. Updates come through your software center (Discover or GNOME Software) or the \"flatpak update\" command.");
             return;
         }

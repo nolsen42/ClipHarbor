@@ -115,16 +115,13 @@ public class SettingsDialog : Dialog
         _engineBar.Margin = new Thickness(0, 10, 0, 0);
         root.Children.Add(_engineBar);
         _autoEngine.IsChecked = s.UpdateEngineAutomatically;
-        if (Platform.IsFlatpak)
-            // The Flatpak brings its own engine and converter; new versions come with app updates.
-            root.Children.Add(new TextBlock { Text = "Comes with this copy of ClipHarbor and is updated along with it.", Classes = { "sub", "small" }, Margin = new Thickness(0, 6, 0, 16) });
-        else
-        {
-            root.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _install, _update } });
-            _autoEngine.Margin = new Thickness(0, 0, 0, 16);
-            ToolTip.SetTip(_autoEngine, "Video sites change often, and an old engine stops working on them.\nChecks when ClipHarbor starts and once a day, while nothing is downloading.");
-            root.Children.Add(_autoEngine);
-        }
+        // The Flatpak comes with the engine and converter, so there's nothing to install; the engine still updates itself.
+        root.Children.Add(Platform.IsFlatpak
+            ? new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _update } }
+            : new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _install, _update } });
+        _autoEngine.Margin = new Thickness(0, 0, 0, 16);
+        ToolTip.SetTip(_autoEngine, "Video sites change often, and an old engine stops working on them.\nChecks when ClipHarbor starts and once a day, while nothing is downloading.");
+        root.Children.Add(_autoEngine);
         _enginePath.Text = s.EnginePath; Row($"Engine file ({Platform.Exe("yt-dlp")})", _enginePath);
         _ffPath.Text = s.FfmpegPath; Row($"Converter file ({Platform.Exe("ffmpeg")})", _ffPath);
         _install.Click += async (_, _) => await Install();

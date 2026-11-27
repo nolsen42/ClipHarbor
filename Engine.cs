@@ -1116,6 +1116,24 @@ public static class Engine
         YtDlp is { } y && Path.GetFullPath(Path.GetDirectoryName(y) ?? "").TrimEnd(Path.DirectorySeparatorChar)
             .Equals(Path.GetFullPath(ToolsDir).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Flatpak: yt-dlp comes in /app/bin, which can't be changed. A copy in ClipHarbor's tools folder can
+    /// update itself daily like on other systems, since sites change faster than ClipHarbor releases.</summary>
+    public static void UseUpdatableFlatpakEngine()
+    {
+        if (!Platform.IsFlatpak) return;
+        var own = Path.Combine(ToolsDir, "yt-dlp");
+        const string bundled = "/app/bin/yt-dlp";
+        if (File.Exists(own) || !File.Exists(bundled)) return;
+        try
+        {
+            File.Copy(bundled, own + ".part", true);
+            Platform.MakeExecutable(own + ".part");
+            File.Move(own + ".part", own, true);
+            ForgetTools();
+        }
+        catch { }
+    }
+
     /// <summary>Quietly updates ClipHarbor's own yt-dlp. Returns the new version, or null when nothing changed.</summary>
     public static async Task<string?> UpdateEngineQuietlyAsync(CancellationToken ct)
     {

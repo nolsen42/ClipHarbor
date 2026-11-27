@@ -203,6 +203,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
             <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-x64.AppImage">AppImage (x64)</a><br><a class="note" href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-linux-arm64.AppImage">ARM (Raspberry Pi)</a></td>
             <td>Right-click → Properties → <b>Allow executing as program</b> (or <code>chmod +x</code>), then double-click it.</td>
           </tr>
+          <tr data-os="linux">
+            <td>Linux with Flatpak</td>
+            <td><a href="clipharbor.flatpakref">Flatpak</a></td>
+            <td>Open the file with Discover or GNOME Software, or run <code>flatpak install --user https://nolsen42.github.io/ClipHarbor/clipharbor.flatpakref</code>. Updates come with your other apps.</td>
+          </tr>
           <tr data-os="android">
             <td>Android 7 and newer</td>
             <td><a href="https://github.com/nolsen42/ClipHarbor/releases/latest/download/ClipHarbor-android.apk">Android app (.apk)</a></td>
@@ -291,7 +296,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: s
     btn.href = base + "ClipHarbor-linux-x64.AppImage";
     label.textContent = "Download for Linux";
     sub.textContent = "AppImage for 64-bit PCs";
-    alt.innerHTML = link("ARM (Raspberry Pi)", "ClipHarbor-linux-arm64.AppImage") + '<a href="#download">Other systems</a>';
+    alt.innerHTML = '<a href="clipharbor.flatpakref">Flatpak</a>' + link("ARM (Raspberry Pi)", "ClipHarbor-linux-arm64.AppImage") + '<a href="#download">Other systems</a>';
   } else if (os === "android") {
     btn.href = base + "ClipHarbor-android.apk";
     label.textContent = "Download for Android";

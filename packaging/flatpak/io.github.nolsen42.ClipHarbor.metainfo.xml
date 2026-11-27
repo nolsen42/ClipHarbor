@@ -76,7 +76,7 @@
   <releases>
     <release version="1.5.2" date="2026-11-27">
       <description>
-        <p>First release on Flathub. Runs in the Flatpak sandbox, with yt-dlp and ffmpeg included and updates through your software center.</p>
+        <p>First Flatpak release: runs in the Flatpak sandbox, with yt-dlp and ffmpeg included, and updates through your software center.</p>
       </description>
     </release>
     <release version="1.5.1" date="2026-11-26">

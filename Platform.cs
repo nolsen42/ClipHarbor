@@ -34,7 +34,7 @@ public static class Platform
         }
     }
 
-    /// <summary>Running inside a Flatpak (e.g. installed from Flathub). The app is then read-only and updated by
+    /// <summary>Running inside a Flatpak (from the ClipHarbor Flatpak repository). The app is then read-only and updated by
     /// the system, comes with its own yt-dlp and ffmpeg, and reaches the desktop through portals.</summary>
     public static bool IsFlatpak { get; } = IsLinux && File.Exists("/.flatpak-info");
 

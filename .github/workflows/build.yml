@@ -333,6 +333,66 @@ jobs:
           name: ClipHarbor-browser-extension
           path: dist/
 
+  # Releases only: the Flatpak (packaging/flatpak), one build per processor type. It builds ffmpeg from
+  # source, so the first run takes a while; later runs reuse the build cache.
+  flatpak:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,     arch: x86_64 }
+          - { os: ubuntu-24.04-arm, arch: aarch64 }
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq flatpak flatpak-builder >/dev/null
+          # Ubuntu 24.04 blocks the user namespaces Flatpak's sandbox (bubblewrap) needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - uses: actions/cache@v4
+        with:
+          path: packaging/flatpak/.flatpak-builder
+          key: flatpak-${{ matrix.arch }}-${{ hashFiles('packaging/flatpak/io.github.nolsen42.ClipHarbor.yml', 'packaging/flatpak/nuget-sources.json') }}
+          restore-keys: flatpak-${{ matrix.arch }}-
+
+      - name: Build
+        working-directory: packaging/flatpak
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${VERSION%%-*}"
+          # The newest yt-dlp (the manifest's pinned one may be weeks old): its release tag and checksum.
+          api=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest || true)
+          tag=$(jq -r '.tag_name // empty' <<< "$api")
+          sha=$(jq -r '.assets[]? | select(.name == "yt-dlp") | .digest // empty' <<< "$api" | sed 's/^sha256://')
+          if [ -n "$tag" ] && [ ${#sha} -eq 64 ]; then
+            sed -i "/releases\/download\/.*\/yt-dlp\$/{s#download/[^/]*/yt-dlp#download/$tag/yt-dlp#;n;s#sha256: .*#sha256: $sha#}" io.github.nolsen42.ClipHarbor.yml
+            echo "yt-dlp $tag"
+          fi
+          grep -A1 'releases/download/.*/yt-dlp$' io.github.nolsen42.ClipHarbor.yml
+          sed -i "s/-p:Version=[0-9][0-9.]*/-p:Version=$v/" io.github.nolsen42.ClipHarbor.yml
+          # The store listing shows the newest <release>; add this one if it isn't written yet.
+          m=io.github.nolsen42.ClipHarbor.metainfo.xml
+          grep -q "release version=\"$v\"" $m || sed -i "s|<releases>|<releases>\n    <release version=\"$v\" date=\"$(date -u +%F)\"/>|" $m
+          flatpak-builder --user --install-deps-from=flathub --disable-rofiles-fuse --force-clean \
+            --arch=${{ matrix.arch }} --repo=repo builddir io.github.nolsen42.ClipHarbor.yml
+          tar -cf ../../flatpak-${{ matrix.arch }}.tar repo
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: flatpak-${{ matrix.arch }}
+          path: flatpak-${{ matrix.arch }}.tar
+          retention-days: 3
+
   # Releases: attach every build. For the Run workflow button, also create the tag and the release.
   release:
     # A failed Android build doesn't hold up the desktop release (it just has no APK).
@@ -376,3 +436,69 @@ jobs:
           else
             gh release upload "$TAG" files/* --clobber --repo "$GITHUB_REPOSITORY"
           fi
+
+  # Releases: the Flatpak repository on the website (GitHub Pages), so Linux users can add it once and
+  # get updates through Discover / GNOME Software. Both processor types go into one signed repository.
+  # Needs the secret FLATPAK_GPG_KEY (packaging/flatpak/README.md); without it this is skipped.
+  # The repository is also attached to the release, so a website-only update can publish it again.
+  flatpak-publish:
+    needs: [plan, flatpak, release]
+    if: always() && needs.release.result == 'success' && needs.flatpak.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      published: ${{ steps.repo.outputs.published }}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: flatpak-*
+          path: parts
+          merge-multiple: true
+
+      - id: repo
+        env:
+          GPG_KEY: ${{ secrets.FLATPAK_GPG_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          if [ -z "$GPG_KEY" ]; then
+            echo "::warning::No FLATPAK_GPG_KEY secret is set, so the Flatpak repository isn't published. See packaging/flatpak/README.md."
+            echo "published=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq flatpak ostree >/dev/null
+          echo "$GPG_KEY" | gpg --batch --import
+          key=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
+          app=io.github.nolsen42.ClipHarbor
+          ostree init --mode=archive-z2 --repo=site/repo
+          for a in x86_64 aarch64; do
+            mkdir -p parts/$a && tar -xf parts/flatpak-$a.tar -C parts/$a
+            ostree pull-local --repo=site/repo parts/$a/repo app/$app/$a/master
+            flatpak build-sign --gpg-sign=$key site/repo $app master --arch=$a
+          done
+          flatpak build-update-repo --gpg-sign=$key --prune site/repo
+          # Files people open to add ClipHarbor: .flatpakref installs the app, .flatpakrepo adds the repository.
+          site="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
+          pub=$(gpg --export "$key" | base64 -w0)
+          printf '%s\n' '[Flatpak Ref]' "Name=$app" 'Branch=master' 'Title=ClipHarbor' "Url=$site/flatpak/repo/" \
+            'SuggestRemoteName=clipharbor' 'IsRuntime=false' 'RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo' \
+            "Homepage=$site/" "Icon=$site/icon-256.png" "GPGKey=$pub" > site/clipharbor.flatpakref
+          printf '%s\n' '[Flatpak Repo]' 'Title=ClipHarbor' "Url=$site/flatpak/repo/" "Homepage=$site/" \
+            'Comment=ClipHarbor video and audio downloader' "Icon=$site/icon-256.png" "GPGKey=$pub" > site/clipharbor.flatpakrepo
+          # One-file installers too, for people who'd rather download a file.
+          flatpak build-bundle --arch=x86_64 --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo site/repo ClipHarbor-linux-x64.flatpak $app master
+          flatpak build-bundle --arch=aarch64 --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo site/repo ClipHarbor-linux-arm64.flatpak $app master
+          tar -cf ClipHarbor-flatpak-repo.tar -C site .
+          ls -la . site
+          gh release upload "$TAG" ClipHarbor-flatpak-repo.tar ClipHarbor-linux-x64.flatpak ClipHarbor-linux-arm64.flatpak --clobber --repo "$GITHUB_REPOSITORY"
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+  # Puts the website and the new Flatpak repository online.
+  pages:
+    needs: flatpak-publish
+    if: always() && needs.flatpak-publish.outputs.published == 'true'
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

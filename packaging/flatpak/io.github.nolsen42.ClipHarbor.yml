@@ -1,4 +1,5 @@
-# Flatpak build of ClipHarbor (for Flathub). How to try it: packaging/flatpak/README.md.
+# Flatpak build of ClipHarbor. Published by the release workflow to the Flatpak repository on the website;
+# see packaging/flatpak/README.md.
 id: io.github.nolsen42.ClipHarbor
 runtime: org.freedesktop.Platform
 runtime-version: '26.08'
@@ -93,7 +94,7 @@ modules:
           tag-pattern: ^n([\d.]+)$
 
   # ---- yt-dlp, the download engine (the zipapp runs on the runtime's Python) ----
-  # Flathub's bot opens a pull request on each new yt-dlp release (x-checker-data); merging it ships the update.
+  # Each release build switches this to the newest yt-dlp; the app also keeps its own copy updated daily.
   - name: yt-dlp
     buildsystem: simple
     build-commands:
@@ -154,5 +155,6 @@ modules:
           - store
           - packaging/flatpak/.flatpak-builder
           - packaging/flatpak/build-dir
+          - packaging/flatpak/builddir
           - packaging/flatpak/repo
       - nuget-sources.json
