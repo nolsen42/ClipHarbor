@@ -39,7 +39,7 @@ Get the latest version from the **[Releases page](../../releases/latest)** and d
 **Android (phones with a 64-bit ARM chip, Android 7 or newer):** download `ClipHarbor-android.apk` on your phone and open it. Android asks to allow installing apps from your browser or file manager the first time. ClipHarbor isn't in the Google Play Store, which doesn't allow YouTube downloaders. To download, press **Share** in YouTube, X, Reddit or any other app and pick **ClipHarbor**, or paste a link. Files are saved in **Download/ClipHarbor**. Long-press a finished download to share it, make a GIF, or make it small enough for Discord. ClipHarbor offers its own updates; Android asks before installing them. Reading a link takes a few seconds on a phone (longer on older ones), since yt-dlp has to start up and solve YouTube's checks each time.
 **Linux without AppImage:** the `.tar.gz` files have the same program. Unpack (`tar -xzf ClipHarbor-linux-x64.tar.gz`) and run `ClipHarbor/ClipHarbor`. If the AppImage doesn't start, run it once from a terminal with `--appimage-extract-and-run` after its name; that works even where AppImages can't be opened directly. To add it to your app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or AppImageLauncher.
 
-**Updates:** ClipHarbor checks this repository's Releases when it starts and once a day. When there's a newer version it shows a banner; press **Update now** to see what's new, and it downloads the update, checks it against the checksum GitHub publishes, and restarts. You can turn the automatic check off, or check by hand, under **Settings → About ClipHarbor**. If ClipHarbor can't replace itself where it's installed (for example in Program Files), it opens the download page instead.
+**Updates:** ClipHarbor checks this repository's Releases when it starts and once a day. When there's a newer version it shows a banner; press **Update now** to see what's new, and it downloads the update, checks it against the checksum GitHub publishes, and restarts. You can turn the automatic check off, or check by hand, under **Settings → About ClipHarbor**. If ClipHarbor can't replace itself where it's installed (for example in Program Files), it opens the download page instead. The Flatpak doesn't update itself: Discover, GNOME Software or `flatpak update` installs new versions, like your other apps.
 
 Want to try the newest changes before they're released? Every update is also built by GitHub Actions: open the **Actions** tab, pick the latest **Build** run and download your system's file from **Artifacts** (it comes wrapped in an extra `.zip`).
 
@@ -83,6 +83,8 @@ The first time you run ClipHarbor, press **Install engine**. The app downloads b
 | macOS | `~/Library/Application Support/ClipHarbor/tools` |
 | Linux | `~/.local/share/ClipHarbor/tools` |
 
+The Flatpak comes with both, so there's nothing to install. Its yt-dlp still updates itself daily, in `~/.var/app/io.github.nolsen42.ClipHarbor/data/ClipHarbor/tools`.
+
 If `yt-dlp` and `ffmpeg` are already installed (for example with Homebrew, apt or winget), or you point to them in Settings, ClipHarbor uses those instead. Direct links to media files (for example `.mp4` or `.mp3`) work without the engine.
 
 ## Building
@@ -100,11 +102,11 @@ To make a single program file that runs without .NET installed, pick your system
 dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish
 ```
 
-GitHub Actions (see `.github/workflows/build.yml`) builds all five versions, wraps the Mac ones as a `.app` and the Linux ones as an AppImage (with [appimagetool](https://github.com/AppImage/appimagetool)) and a `.tar.gz`, and checks that the app starts on each system. It also zips the browser extension, and for releases has Mozilla sign the Firefox copy when the repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` hold API keys from [addons.mozilla.org](https://addons.mozilla.org/developers/addon/api/key/).
+GitHub Actions (see `.github/workflows/build.yml`) builds all five versions, wraps the Mac ones as a `.app` and the Linux ones as an AppImage (with [appimagetool](https://github.com/AppImage/appimagetool)) and a `.tar.gz`, and checks that the app starts on each system. For releases it also builds the Flatpak and publishes it in ClipHarbor's own Flatpak repository on the website (see [packaging/flatpak](packaging/flatpak/README.md)). It also zips the browser extension, and for releases has Mozilla sign the Firefox copy when the repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` hold API keys from [addons.mozilla.org](https://addons.mozilla.org/developers/addon/api/key/).
 
 ### Publishing a release
 
-Open the **Actions** tab, pick **Build**, press **Run workflow**, choose **patch** (fixes), **minor** (new features) or **major**, and press the green **Run workflow** button. The build works out the next version from the last release (for example v1.1.0 → v1.1.1), builds everything, writes the release notes from the commit titles since the last release, and publishes the release with all the files attached. Publishing a release by hand on the Releases page still works too.
+Open the **Actions** tab, pick **Build**, press **Run workflow**, choose **patch** (fixes), **minor** (new features) or **major**, and press the green **Run workflow** button. The build works out the next version from the last release (for example v1.1.0 → v1.1.1), builds everything, writes the release notes from the commit titles since the last release, and publishes the release with all the files attached. Publishing a release by hand on the Releases page still works too. Choosing **flatpak** instead builds and publishes only the Flatpak for the latest release, without making a new one.
 
 The button needs a repository secret named `RELEASE_TOKEN` (set up once). GitHub doesn't let a workflow's built-in token create a release tag when the commits being released changed the workflow file, so the release step uses this token instead:
 
@@ -123,6 +125,8 @@ keytool -genkeypair -v -keystore clipharbor-release.keystore -alias clipharbor -
 
 Then add three repository secrets: `ANDROID_KEYSTORE` (the file as base64; in PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("clipharbor-release.keystore"))`), `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS` (`clipharbor`). **Back up the keystore file and its password somewhere safe and never commit it**: if it's lost, existing installs can't be updated and everyone has to uninstall and reinstall.
 
+**Flatpak signing key (set up once, keep it forever).** Flatpak only installs updates signed with the key people's computers already trust. The repository secret `FLATPAK_GPG_KEY` holds it; [packaging/flatpak](packaging/flatpak/README.md) shows how to make it. Without the secret, releases skip publishing the Flatpak. **Back the key up somewhere safe and never commit it**: if it's lost, everyone has to remove the ClipHarbor repository and add it again. Publishing the Flatpak also needs **Settings → Pages → Source** set to **GitHub Actions**, since the website workflow (`.github/workflows/pages.yml`) puts the repository online together with `docs/`.
+
 ### Building for Android
 
 Install the Android tools once with `dotnet workload install android` (as administrator on Windows), then build the APK with `dotnet build android/ClipHarbor.Android.csproj -c Release`. The project shares the engine, models and look with the desktop app; Android-only code is in `android/`. yt-dlp, Python and ffmpeg come from [youtubedl-android](https://github.com/yausername/youtubedl-android).
@@ -140,6 +144,7 @@ Your download list, subscriptions and settings are saved in `state.json` in:
 | Windows | `%APPDATA%\ClipHarbor` |
 | macOS | `~/Library/Application Support/ClipHarbor` |
 | Linux | `~/.config/ClipHarbor` |
+| Linux (Flatpak) | `~/.var/app/io.github.nolsen42.ClipHarbor/config/ClipHarbor` |
 
 By default, downloads go to a `ClipHarbor` folder inside your Videos folder (Movies on a Mac).
 
